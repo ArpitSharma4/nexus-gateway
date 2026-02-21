@@ -17,7 +17,7 @@ export default function SystemMonitor() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 2.2, duration: 1, ease: 'easeOut' }}
-            className="fixed bottom-8 right-8 z-[100] flex items-center px-4 py-2 bg-slate-900/[0.04] backdrop-blur-xl rounded-full border border-slate-900/5 shadow-2xl select-none pointer-events-none"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 lg:left-auto lg:right-8 lg:bottom-8 lg:translate-x-0 z-[100] flex items-center px-4 py-2 bg-slate-900/[0.04] backdrop-blur-xl rounded-full border border-slate-900/5 shadow-2xl select-none pointer-events-none"
         >
             {/* Gateway Status */}
             <div className="flex items-center gap-2 px-2">

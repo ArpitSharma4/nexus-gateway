@@ -166,7 +166,7 @@ export default function AuthPage({ onLogin }: Props) {
             <div className="h-screen w-screen flex items-center justify-center p-4 lg:p-8 overflow-hidden">
                 {/* ── Main Card (Full White) ────────────────────────── */}
                 <div
-                    className="group w-full max-w-5xl bg-white rounded-[32px] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 relative scale-[0.8] sm:scale-90 lg:scale-[0.85] 2xl:scale-100 transition-all duration-500 origin-center"
+                    className="group w-full max-w-5xl bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col lg:grid lg:grid-cols-2 relative scale-[0.9] sm:scale-95 lg:scale-[0.85] 2xl:scale-100 transition-all duration-500 origin-center"
                     style={{ border: '1px solid #f1f5f9' }}
                 >
                     {/* Vertical Divider (The "Spine") */}
@@ -177,7 +177,7 @@ export default function AuthPage({ onLogin }: Props) {
                     <div className="hidden lg:block absolute left-1/2 bottom-[12%] -translate-x-1/2 w-1.5 h-1.5 rounded-full border border-indigo-200 bg-white z-20" />
 
                     {/* ── LEFT: Form Panel ─────────────────────── */}
-                    <div className="py-8 lg:py-10 px-8 sm:px-12 lg:px-14 flex flex-col justify-center bg-white relative z-10">
+                    <div className="order-2 lg:order-1 py-8 lg:py-10 px-6 sm:px-12 lg:px-14 flex flex-col justify-center bg-white relative z-10">
                         {/* Logo */}
                         <div className="flex items-center gap-3 mb-6 lg:mb-8">
                             <div className="bg-indigo-600 text-white p-2 rounded-2xl shadow-lg shadow-indigo-100">
@@ -339,9 +339,9 @@ export default function AuthPage({ onLogin }: Props) {
                     </div>
 
                     {/* ── RIGHT: Illustration Panel ────────────── */}
-                    <div className="hidden lg:flex flex-col items-center justify-center py-8 lg:py-10 px-10 lg:px-14 relative bg-white overflow-hidden">
+                    <div className="order-1 lg:order-2 flex flex-col items-center justify-center py-6 lg:py-10 px-6 lg:px-14 relative bg-slate-50/30 lg:bg-white overflow-hidden border-b lg:border-b-0 border-slate-100">
                         {/* Illustration Content */}
-                        <div className="relative z-10 w-full mb-6 lg:mb-8">
+                        <div className="relative z-10 w-full mb-4 lg:mb-8 scale-75 sm:scale-90 lg:scale-100">
                             <NexusIllustration />
                             <div className="text-center mt-2">
                                 <h2 className="text-xl font-bold text-slate-900 mb-2">Secure Payment Gateway</h2>
@@ -352,7 +352,7 @@ export default function AuthPage({ onLogin }: Props) {
                         </div>
 
                         {/* Feature Cards Column */}
-                        <div className="w-full max-w-[320px] space-y-3 lg:space-y-4 relative z-10">
+                        <div className="hidden sm:block w-full max-w-[320px] space-y-3 lg:space-y-4 relative z-10">
                             <FeatureItem icon={Shield} title="AES-256 Encryption" desc="Bank-grade security on every transaction" />
                             <FeatureItem icon={Radio} title="Real-time Webhooks" desc="Instant payment event notifications" />
                         </div>

@@ -25,7 +25,7 @@ type NexusBackgroundProps = {
 
 /* ── Config ─────────────────────────────────────────────────────────── */
 
-const PARTICLE_COUNT = 144
+const PARTICLE_COUNT = window.innerWidth < 768 ? 72 : 144
 const CONNECTION_DIST = 155
 const MOUSE_RADIUS = 200
 const MOUSE_FORCE = 0.014
@@ -66,9 +66,9 @@ export default function NexusBackground({ active = false, children }: NexusBackg
 
     /* ── Init particles ────────────────────────────────────────────── */
 
-    const initParticles = useCallback((w: number, h: number) => {
+    const initParticles = useCallback((w: number, h: number, count: number = PARTICLE_COUNT) => {
         const arr: Particle[] = []
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
+        for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2
             const speed = BASE_SPEED * (0.3 + Math.random() * 0.7)
             const depth = Math.random()  // 0 = far, 1 = near
@@ -250,7 +250,8 @@ export default function NexusBackground({ active = false, children }: NexusBackg
             canvas.style.width = window.innerWidth + 'px'
             canvas.style.height = window.innerHeight + 'px'
             if (particles.current.length === 0) {
-                initParticles(window.innerWidth, window.innerHeight)
+                const count = window.innerWidth < 768 ? 72 : 144
+                initParticles(window.innerWidth, window.innerHeight, count)
             }
         }
 
