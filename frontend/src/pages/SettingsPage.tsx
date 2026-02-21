@@ -35,6 +35,7 @@ export default function SettingsPage({ session: _session }: Props) {
     } = useMerchant()
     const [health, setHealth] = useState<GatewayHealth[]>([])
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
+    const [razorpayKeys, setRazorpayKeys] = useState({ id: '', secret: '' })
     const [saving, setSaving] = useState<string | null>(null)
     const [newRule, setNewRule] = useState({ rule_type: 'currency', gateway_name: 'razorpay', conditions: '{"currency":"INR"}', priority: 0 })
     const [showAddRule, setShowAddRule] = useState(false)
@@ -81,12 +82,26 @@ export default function SettingsPage({ session: _session }: Props) {
     async function saveApiKey(gatewayName: string) {
         setSaving(gatewayName)
         try {
+            let apiKey = apiKeys[gatewayName] || null
+
+            // For Razorpay, we combine ID and Secret with a colon
+            if (gatewayName === 'razorpay') {
+                if (razorpayKeys.id && razorpayKeys.secret) {
+                    apiKey = `${razorpayKeys.id}:${razorpayKeys.secret}`
+                }
+            }
+
             await api.put('/gateways/config', {
                 gateway_name: gatewayName,
                 enabled: true,
-                api_key: apiKeys[gatewayName] || null,
+                api_key: apiKey,
             })
-            setApiKeys(prev => ({ ...prev, [gatewayName]: '' }))
+
+            if (gatewayName === 'razorpay') {
+                setRazorpayKeys({ id: '', secret: '' })
+            } else {
+                setApiKeys(prev => ({ ...prev, [gatewayName]: '' }))
+            }
             await refreshAll()
         } catch { /* ignore */ }
         setSaving(null)
@@ -198,28 +213,57 @@ export default function SettingsPage({ session: _session }: Props) {
 
                                     {/* API Key input (not for simulator) */}
                                     {gw.name !== 'simulator' && (
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                                 <Key size={11} />
                                                 <span>{cfg?.has_api_key ? 'API key saved' : 'No API key set'}</span>
                                                 {cfg?.has_api_key && <CheckCircle2 size={11} className="text-emerald-500" />}
                                             </div>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="password"
-                                                    placeholder={gw.name === 'stripe' ? 'sk_test_...' : 'rzp_key_...'}
-                                                    value={apiKeys[gw.name] || ''}
-                                                    onChange={e => setApiKeys(prev => ({ ...prev, [gw.name]: e.target.value }))}
-                                                    className="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 font-mono transition"
-                                                />
-                                                <button
-                                                    onClick={() => saveApiKey(gw.name)}
-                                                    disabled={!apiKeys[gw.name]}
-                                                    className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-30 disabled:pointer-events-none transition shadow-sm"
-                                                >
-                                                    <Save size={16} />
-                                                </button>
-                                            </div>
+
+                                            {gw.name === 'razorpay' ? (
+                                                <div className="space-y-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Key ID (rzp_test_...)"
+                                                        value={razorpayKeys.id}
+                                                        onChange={e => setRazorpayKeys(prev => ({ ...prev, id: e.target.value }))}
+                                                        className="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 font-mono transition"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="password"
+                                                            placeholder="Key Secret"
+                                                            value={razorpayKeys.secret}
+                                                            onChange={e => setRazorpayKeys(prev => ({ ...prev, secret: e.target.value }))}
+                                                            className="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 font-mono transition"
+                                                        />
+                                                        <button
+                                                            onClick={() => saveApiKey(gw.name)}
+                                                            disabled={!razorpayKeys.id || !razorpayKeys.secret}
+                                                            className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-30 disabled:pointer-events-none transition shadow-sm"
+                                                        >
+                                                            <Save size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="password"
+                                                        placeholder={gw.name === 'stripe' ? 'sk_test_...' : 'API Key'}
+                                                        value={apiKeys[gw.name] || ''}
+                                                        onChange={e => setApiKeys(prev => ({ ...prev, [gw.name]: e.target.value }))}
+                                                        className="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 font-mono transition"
+                                                    />
+                                                    <button
+                                                        onClick={() => saveApiKey(gw.name)}
+                                                        disabled={!apiKeys[gw.name]}
+                                                        className="min-w-[44px] min-h-[44px] flex items-center justify-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-30 disabled:pointer-events-none transition shadow-sm"
+                                                    >
+                                                        <Save size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

@@ -30,6 +30,13 @@ const TEST_CARDS = [
     { label: 'Insufficient Funds', number: '4111110000', hint: 'Ends in 0000 — triggers decline' },
 ]
 
+const CURRENCIES = [
+    { code: 'INR', symbol: '₹', label: 'India (INR)' },
+    { code: 'USD', symbol: '$', label: 'USA (USD)' },
+    { code: 'EUR', symbol: '€', label: 'Europe (EUR)' },
+    { code: 'GBP', symbol: '£', label: 'UK (GBP)' },
+]
+
 type Props = {
     onClose: () => void
     onComplete: (result: Result) => void
@@ -58,7 +65,7 @@ const GATEWAY_COLORS: Record<string, string> = {
 export default function CheckoutModal({ onClose, onComplete }: Props) {
     const [step, setStep] = useState<Step>('form')
     const [amount, setAmount] = useState('500.00')
-    const [currency] = useState('INR')
+    const [currency, setCurrency] = useState('INR')
     const [cardNumber, setCardNumber] = useState('')
     const [cvv, setCvv] = useState('')
     const [error, setError] = useState('')
@@ -185,15 +192,30 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="relative group">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">&#8377;</span>
-                                        <input
-                                            type="number"
-                                            value={amount}
-                                            onChange={e => setAmount(e.target.value)}
-                                            required
-                                            className="w-full pl-9 pr-4 py-3 bg-slate-50/50 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
-                                        />
+                                    <div className="flex gap-2">
+                                        <div className="relative group flex-1">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">
+                                                {CURRENCIES.find(c => c.code === currency)?.symbol || '₹'}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                value={amount}
+                                                onChange={e => setAmount(e.target.value)}
+                                                required
+                                                className="w-full pl-9 pr-4 py-3 bg-slate-50/50 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
+                                            />
+                                        </div>
+                                        <div className="w-32">
+                                            <select
+                                                value={currency}
+                                                onChange={e => setCurrency(e.target.value)}
+                                                className="w-full px-3 py-3 bg-slate-50/50 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all appearance-none cursor-pointer"
+                                            >
+                                                {CURRENCIES.map(c => (
+                                                    <option key={c.code} value={c.code}>{c.code}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -363,7 +385,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                                 <div className="bg-slate-50/80 rounded-2xl border border-slate-100 p-4 space-y-3">
                                     {[
                                         { label: 'Network ID', value: result.payment_intent_id.slice(0, 24) + '...', mono: true },
-                                        { label: 'Final Value', value: new Intl.NumberFormat('en-IN', { style: 'currency', currency: result.currency }).format(result.amount / 100) },
+                                        { label: 'Final Value', value: new Intl.NumberFormat(undefined, { style: 'currency', currency: result.currency }).format(result.amount / 100) },
                                         { label: 'Gateway', value: result.gateway_used, mono: false, badge: true },
                                         { label: 'Atomic Key', value: ik, mono: true },
                                     ].map(row => (

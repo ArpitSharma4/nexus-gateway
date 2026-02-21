@@ -49,7 +49,7 @@ class RazorpayAdapter(BaseGateway):
             order = client.order.create({
                 "amount": amount,
                 "currency": currency.upper(),
-                "receipt": idempotency_key,
+                "receipt": idempotency_key[:40],
                 "notes": {"source": "nexus-gateway"},
             })
 
