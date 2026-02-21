@@ -12,9 +12,19 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set.")
 
+# Clean the DATABASE_URL: SQLAlchemy 1.4+ and some drivers can't parse ?pgbouncer=true
+# We strip query params to prevent DSN initialization errors.
+if "?" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("?")[0]
+
 # Create the SQLAlchemy engine with NullPool for serverless optimization.
-# This ensures that connections are not leaked or persisted across Lambda invocations.
-engine = create_engine(DATABASE_URL, poolclass=NullPool)
+# pool_pre_ping=True ensures we check connection health before use,
+# which is essential when the remote pooler (Supavisor) might drop idle ones.
+engine = create_engine(
+    DATABASE_URL,
+    poolclass=NullPool,
+    pool_pre_ping=True
+)
 
 # SessionLocal is a factory for new database sessions
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
