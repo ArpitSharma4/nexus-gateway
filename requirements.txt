@@ -10,3 +10,4 @@ supabase
 pyjwt
 stripe
 razorpay
+cryptography

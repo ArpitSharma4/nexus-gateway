@@ -14,6 +14,7 @@ from database.session import get_db
 from models.gateway import GatewayConfig, GatewayHealth
 from models.merchant import Merchant
 from models.routing_rule import RoutingRule
+from api.utils.security import security_manager
 
 router = APIRouter(prefix="/gateways", tags=["Gateways"])
 
@@ -128,11 +129,10 @@ def upsert_config(
         )
         .first()
     )
-
     if existing:
         existing.enabled = body.enabled
         if body.api_key is not None:
-            existing.api_key_encrypted = body.api_key  # In production, encrypt this
+            existing.api_key_encrypted = security_manager.encrypt(body.api_key)
         db.commit()
         db.refresh(existing)
         config = existing
@@ -141,7 +141,7 @@ def upsert_config(
             merchant_id=merchant.id,
             gateway_name=body.gateway_name,
             enabled=body.enabled,
-            api_key_encrypted=body.api_key if body.api_key else None,
+            api_key_encrypted=security_manager.encrypt(body.api_key) if body.api_key else None,
         )
         db.add(config)
         db.commit()
