@@ -56,7 +56,7 @@ Every webhook payload includes an X-Nexus-Signature header. This allows merchant
    git clone [https://github.com/your-username/nexus-gateway.git](https://github.com/your-username/nexus-gateway.git)
    cd nexus-gateway
    
-## 2.**Environment Variables:**
+***2.Environment Variables:**
 Create a .env file based on .env.example:
 
 Code snippet
