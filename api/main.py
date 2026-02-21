@@ -5,7 +5,7 @@ main.py — Nexus Gateway application entry point.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import merchants, payments
+from .routes import merchants, payments
 
 # ── App Instance ───────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tighten in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

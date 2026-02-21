@@ -69,6 +69,35 @@ class ProcessPaymentResponse(BaseModel):
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
+@router.get(
+    "/",
+    summary="List Payment Intents",
+    description="Returns all payment intents belonging to the authenticated merchant, newest first.",
+    tags=["Payments"],
+)
+def list_payment_intents(
+    merchant: Merchant = Depends(get_current_merchant),
+    db: Session = Depends(get_db),
+):
+    from models.payment import PaymentIntent
+    intents = (
+        db.query(PaymentIntent)
+        .filter(PaymentIntent.merchant_id == merchant.id)
+        .order_by(PaymentIntent.id.desc())
+        .all()
+    )
+    return [
+        {
+            "payment_intent_id": i.id,
+            "amount": i.amount,
+            "currency": i.currency,
+            "status": i.status,
+            "idempotency_key": i.idempotency_key,
+        }
+        for i in intents
+    ]
+
+
 @router.post(
     "/create",
     summary="Create a Payment Intent",

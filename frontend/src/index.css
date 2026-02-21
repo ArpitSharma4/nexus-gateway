@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ── Global Reset & Typography ─────────────────────────────────────── */
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1e293b;
+  background-color: #f8fafc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* ── Shimmer sweep animation ───────────────────────────────────────── */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg,
+      transparent 0%,
+      transparent 30%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 70%,
+      transparent 100%);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ── Button glow pulse ─────────────────────────────────────────────── */
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+  }
+
+  50% {
+    box-shadow: 0 4px 24px rgba(79, 70, 229, 0.45);
+  }
+}
+
+.btn-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
