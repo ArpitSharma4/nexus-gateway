@@ -56,22 +56,18 @@ Every webhook payload includes an X-Nexus-Signature header. This allows merchant
    git clone [https://github.com/your-username/nexus-gateway.git](https://github.com/your-username/nexus-gateway.git)
    cd nexus-gateway
    
-2. **Environment Variables**
+## 2. Environment Variables
 
 Create a `.env` file based on `.env.example`:
 
 ```env
 DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres
 WEBHOOK_SECRET=your_secret_here
-
-
-3. **Installation and Initialization:**
-
-```bash
+3. Installation and Initialization
+Bash
 pip install -r requirements.txt
 python init_db.py
-Run Server:
-
+4. Run Server
 Bash
 uvicorn main:app --reload
 Testing the Lifecycle
