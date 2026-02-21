@@ -3,8 +3,18 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Ensure the project root is in the path for Vercel
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# ── Robust Path Handling for Vercel ──────────────────────────────────────────
+import os
+import sys
+
+# Get the absolute path of the current file's directory (api/)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the project root (one level up from api/)
+project_root = os.path.dirname(current_dir)
+
+# Ensure project root is at the front of sys.path
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from api.routes import merchants, payments
 
