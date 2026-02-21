@@ -52,7 +52,11 @@ class StripeAdapter(BaseGateway):
                 payment_method_types=["card"],
                 idempotency_key=idempotency_key,
                 metadata={"source": "nexus-gateway"},
+                api_key=self._api_key
             )
+            
+            # Explicitly ensures the header is correctly formed as "Bearer key" 
+            # by the underlying library while being thread-safe (non-global key).
 
             return GatewayResult(
                 status=ChargeStatus.SUCCESS,
@@ -77,7 +81,7 @@ class StripeAdapter(BaseGateway):
 
             start = time.perf_counter()
             # Lightweight call — list 1 balance transaction
-            stripe.Balance.retrieve()
+            stripe.Balance.retrieve(api_key=self._api_key)
             latency = (time.perf_counter() - start) * 1000
 
             return HealthResult(

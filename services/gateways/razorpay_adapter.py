@@ -23,9 +23,21 @@ logger = logging.getLogger(__name__)
 class RazorpayAdapter(BaseGateway):
     """Adapter for Razorpay Payments via their Python SDK."""
 
-    def __init__(self, key_id: str, key_secret: str):
-        self._key_id = key_id
-        self._key_secret = key_secret
+    def __init__(self, key_id: str, key_secret: str = ""):
+        # If key_id contains a colon (e.g., from a single-string storage), split it automatically
+        if ":" in key_id and not key_secret:
+            parts = key_id.split(":")
+            self._key_id = parts[0]
+            self._key_secret = parts[1] if len(parts) > 1 else ""
+            print(f"[DEBUG] RazorpayAdapter: Auto-split combined key into ID({len(self._key_id)}) and Secret({len(self._key_secret)})")
+        else:
+            self._key_id = key_id
+            self._key_secret = key_secret
+
+        if not self._key_id:
+            logger.error("RazorpayAdapter: Initialized with empty Key ID!")
+        if not self._key_secret:
+            logger.warning("RazorpayAdapter: Initialized with empty Key Secret!")
 
     @property
     def name(self) -> str:

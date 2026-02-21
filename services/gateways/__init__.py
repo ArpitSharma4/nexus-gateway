@@ -36,17 +36,27 @@ def get_available_gateways(db: Optional[Session] = None, merchant_id: Optional[s
             if config.gateway_name == "stripe" and config.api_key_encrypted:
                 from services.gateways.stripe_adapter import StripeAdapter
                 decrypted_key = encryption_manager.decrypt(config.api_key_encrypted)
-                gateways["stripe"] = StripeAdapter(api_key=decrypted_key)
-                print(f"[DEBUG] Loaded Stripe from DB (decrypted)")
+                print(f"[DEBUG] Stripe Key Length: {len(decrypted_key)}")
+                
+                if len(decrypted_key) > 0:
+                    gateways["stripe"] = StripeAdapter(api_key=decrypted_key)
+                    print(f"[DEBUG] Loaded Stripe from DB (decrypted)")
+                else:
+                    print(f"[WARNING] Stripe key length is 0 for merchant {merchant_id}. Skipping.")
                 
             elif config.gateway_name == "razorpay" and config.api_key_encrypted:
                 from services.gateways.razorpay_adapter import RazorpayAdapter
                 decrypted_key = encryption_manager.decrypt(config.api_key_encrypted)
-                parts = decrypted_key.split(":")
-                key_id = parts[0]
-                key_secret = parts[1] if len(parts) > 1 else ""
-                gateways["razorpay"] = RazorpayAdapter(key_id=key_id, key_secret=key_secret)
-                print(f"[DEBUG] Loaded Razorpay from DB (decrypted)")
+                print(f"[DEBUG] Razorpay Key Length: {len(decrypted_key)}")
+                
+                if len(decrypted_key) > 0:
+                    parts = decrypted_key.split(":")
+                    key_id = parts[0]
+                    key_secret = parts[1] if len(parts) > 1 else ""
+                    gateways["razorpay"] = RazorpayAdapter(key_id=key_id, key_secret=key_secret)
+                    print(f"[DEBUG] Loaded Razorpay from DB (decrypted)")
+                else:
+                    print(f"[WARNING] Razorpay key length is 0 for merchant {merchant_id}. Skipping.")
 
     # 2. Legacy / Environment Variable Fallback
     if "stripe" not in gateways:

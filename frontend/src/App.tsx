@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Analytics } from '@vercel/analytics/react'
 import api, { getSavedApiKey, setApiKey, clearApiKey } from './lib/api'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
@@ -87,6 +88,7 @@ export default function App() {
                     </MerchantProvider>
                 )}
             </AnimatePresence>
+            <Analytics />
         </div>
     )
 }
