@@ -1,5 +1,5 @@
-import os
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
@@ -11,8 +11,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set.")
 
-# Create the SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+# Create the SQLAlchemy engine with NullPool for serverless optimization.
+# This ensures that connections are not leaked or persisted across Lambda invocations.
+engine = create_engine(DATABASE_URL, poolclass=NullPool)
 
 # SessionLocal is a factory for new database sessions
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
