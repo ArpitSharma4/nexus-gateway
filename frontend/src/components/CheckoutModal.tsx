@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { X, Zap, Check, ArrowRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CreditCard, ShieldCheck, Zap, Activity, AlertCircle, RefreshCw, X, Check, Lock, ChevronRight, Globe, Info, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import api from '../lib/api'
+import LegalModal from './LegalModal'
 
 // High-performance transaction simulator with live trace log
 
@@ -66,6 +67,8 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
     const [step, setStep] = useState<Step>('form')
     const [amount, setAmount] = useState('500.00')
     const [currency, setCurrency] = useState('INR')
+    const [agreedToTerms, setAgreedToTerms] = useState(false)
+    const [showLegal, setShowLegal] = useState(false)
     const [cardNumber, setCardNumber] = useState('')
     const [cvv, setCvv] = useState('')
     const [error, setError] = useState('')
@@ -278,10 +281,28 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                                     </div>
                                 )}
 
+                                {/* Legal Accept */}
+                                <div className="pt-4 border-t border-slate-100 mb-2">
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <div className="relative flex items-center justify-center mt-0.5">
+                                            <input
+                                                type="checkbox"
+                                                className="peer appearance-none w-4 h-4 rounded-md border-2 border-slate-200 checked:border-indigo-600 checked:bg-indigo-600 transition-all"
+                                                checked={agreedToTerms}
+                                                onChange={e => setAgreedToTerms(e.target.checked)}
+                                            />
+                                            <Check size={10} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                        </div>
+                                        <span className="text-[11px] text-slate-500 font-medium leading-tight group-hover:text-slate-700 transition-colors">
+                                            I agree to the Nexus Beta <button type="button" onClick={(e) => { e.preventDefault(); setShowLegal(true); }} className="text-indigo-600 font-bold hover:underline">Terms & Conditions</button>. I understand this is an experimental system.
+                                        </span>
+                                    </label>
+                                </div>
+
                                 <button
                                     type="submit"
-                                    disabled={submitting}
-                                    className="w-full bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-2xl relative overflow-hidden group transition-all h-[56px]"
+                                    disabled={submitting || !agreedToTerms}
+                                    className="w-full bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-2xl relative overflow-hidden group transition-all h-[56px] disabled:opacity-30 disabled:pointer-events-none"
                                 >
                                     <div className="absolute inset-0 flex items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-300 font-bold text-sm tracking-tight text-indigo-100">
                                         <Zap size={16} fill="currentColor" />
@@ -437,7 +458,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
 
                                 <div className="flex gap-2 pt-2">
                                     <button
-                                        onClick={() => { setStep('form'); setResult(null); setIk('ik_' + Math.random().toString(36).slice(2, 10)) }}
+                                        onClick={() => { setStep('form'); setResult(null); setIk('ik_' + Math.random().toString(36).slice(2, 10)); setAgreedToTerms(false); }}
                                         className="flex-1 border-2 border-slate-200 text-slate-600 hover:bg-slate-50 font-black text-[11px] py-4 rounded-2xl transition-all uppercase tracking-widest"
                                     >
                                         RE-INITIATE
@@ -454,6 +475,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                     </AnimatePresence>
                 </motion.div>
             </motion.div>
+            <LegalModal isOpen={showLegal} onClose={() => setShowLegal(false)} />
         </div>
     )
 }

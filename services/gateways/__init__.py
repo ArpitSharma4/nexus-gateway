@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from services.gateways.base import BaseGateway
 from services.gateways.simulator_adapter import SimulatorAdapter
 from models.gateway import GatewayConfig
-from api.utils.security import security_manager
+from api.utils.encryption import encryption_manager
 
 
 def get_available_gateways(db: Optional[Session] = None, merchant_id: Optional[str] = None) -> Dict[str, BaseGateway]:
@@ -35,13 +35,13 @@ def get_available_gateways(db: Optional[Session] = None, merchant_id: Optional[s
                 
             if config.gateway_name == "stripe" and config.api_key_encrypted:
                 from services.gateways.stripe_adapter import StripeAdapter
-                decrypted_key = security_manager.decrypt(config.api_key_encrypted)
+                decrypted_key = encryption_manager.decrypt(config.api_key_encrypted)
                 gateways["stripe"] = StripeAdapter(api_key=decrypted_key)
                 print(f"[DEBUG] Loaded Stripe from DB (decrypted)")
                 
             elif config.gateway_name == "razorpay" and config.api_key_encrypted:
                 from services.gateways.razorpay_adapter import RazorpayAdapter
-                decrypted_key = security_manager.decrypt(config.api_key_encrypted)
+                decrypted_key = encryption_manager.decrypt(config.api_key_encrypted)
                 parts = decrypted_key.split(":")
                 key_id = parts[0]
                 key_secret = parts[1] if len(parts) > 1 else ""

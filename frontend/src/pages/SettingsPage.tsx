@@ -5,6 +5,7 @@ import api from '../lib/api'
 import type { Session } from '../App'
 
 import { useMerchant, type GatewayConfig } from '../contexts/MerchantContext'
+import LegalModal from '../components/LegalModal'
 
 type GatewayHealth = {
     gateway_name: string
@@ -39,6 +40,7 @@ export default function SettingsPage({ session: _session }: Props) {
     const [saving, setSaving] = useState<string | null>(null)
     const [newRule, setNewRule] = useState({ rule_type: 'currency', gateway_name: 'razorpay', conditions: '{"currency":"INR"}', priority: 0 })
     const [showAddRule, setShowAddRule] = useState(false)
+    const [showLegal, setShowLegal] = useState(false)
 
     useEffect(() => {
         fetchHealth()
@@ -379,6 +381,20 @@ export default function SettingsPage({ session: _session }: Props) {
                     </div>
                 )}
             </div>
+
+            {/* Footer Legal Link */}
+            <div className="flex justify-center pt-8 border-t border-slate-100">
+                <button
+                    onClick={() => setShowLegal(true)}
+                    className="text-[10px] font-black tracking-[0.2em] text-slate-300 hover:text-indigo-500 transition-colors flex items-center gap-2"
+                >
+                    <div className="w-4 h-px bg-slate-200" />
+                    PRIVACY POLICY & TERMS OF SERVICE (BETA)
+                    <div className="w-4 h-px bg-slate-200" />
+                </button>
+            </div>
+
+            <LegalModal isOpen={showLegal} onClose={() => setShowLegal(false)} />
         </div>
     )
 }
