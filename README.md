@@ -67,7 +67,7 @@ WEBHOOK_SECRET=your_secret_here
 
 3. **Installation and Initialization:**
 
-Bash
+```bash
 pip install -r requirements.txt
 python init_db.py
 Run Server:
