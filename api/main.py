@@ -43,12 +43,12 @@ app.add_middleware(
 
 # ── Routers ────────────────────────────────────────────────────────────────────
 
-app.include_router(merchants.router)
-app.include_router(payments.router)
+app.include_router(merchants.router, prefix="/api")
+app.include_router(payments.router, prefix="/api")
 
 # ── Core Endpoints ─────────────────────────────────────────────────────────────
 
-@app.get("/health", tags=["System"], summary="Health check")
+@app.get("/api/health", tags=["System"], summary="Health check")
 def health_check():
     """Returns a simple liveness signal — useful for uptime monitors."""
     return {"status": "ok", "service": "nexus-gateway"}
