@@ -1,9 +1,34 @@
 import { useEffect, useState } from 'react'
-import { Database, Server, Activity } from 'lucide-react'
+import { Database, Server, Activity, Info } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import api from '../lib/api'
 import { useMerchant } from '../contexts/MerchantContext'
 
+
+function HoverTooltip({ content, children }: { content: string; children: React.ReactNode }) {
+    const [isHovered, setIsHovered] = useState(false)
+    return (
+        <div className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+            {children}
+            <AnimatePresence>
+                {isHovered && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 bg-slate-900 text-white p-3 rounded-2xl text-[10px] shadow-2xl z-50 pointer-events-none border border-slate-800"
+                    >
+                        <div className="relative z-10 font-medium leading-relaxed">
+                            {content}
+                        </div>
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-slate-900 border-r border-b border-slate-800" />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
 
 export default function SystemMonitor() {
     const { configs } = useMerchant()
@@ -57,29 +82,37 @@ export default function SystemMonitor() {
                 <div className="w-px h-3 bg-slate-200/80" />
 
                 {/* Core Status */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <Database size={12} className="text-slate-400 fill-slate-400/10 sm:scale-110" />
-                    <div className="flex items-center gap-1 sm:gap-1.5 font-bold">
-                        <span className="text-slate-400 font-black tracking-tighter hidden xs:inline">CORE</span>
-                        <span className="text-slate-900 font-black italic uppercase leading-none mt-0.5">STABLE</span>
+                <HoverTooltip content="Real-time monitoring of local database health and Vercel serverless function connectivity.">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 cursor-help">
+                        <Database size={12} className="text-slate-400 fill-slate-400/10 sm:scale-110" />
+                        <div className="flex items-center gap-1 sm:gap-1.5 font-bold">
+                            <span className="text-slate-400 font-black tracking-tighter hidden xs:inline flex items-center gap-1">
+                                CORE <Info size={8} />
+                            </span>
+                            <span className="text-slate-900 font-black italic uppercase leading-none mt-0.5">STABLE</span>
+                        </div>
                     </div>
-                </div>
+                </HoverTooltip>
 
                 <div className="w-px h-3 bg-slate-200/80" />
 
                 {/* Latency */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <Server size={12} className="text-slate-400 fill-slate-400/10 sm:scale-110" />
-                    <div className="flex items-center gap-1 sm:gap-1.5 font-bold">
-                        <span className="text-slate-400 font-black tracking-tighter hidden xs:inline">LAT</span>
-                        <span className={clsx(
-                            "font-black leading-none mt-0.5",
-                            hasActiveRealGateway ? "text-emerald-500" : "text-slate-400"
-                        )}>
-                            {displayLatency}
-                        </span>
+                <HoverTooltip content="Round-trip time (RTT) from your browser to the Nexus Edge. Measures orchestration overhead.">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 cursor-help">
+                        <Server size={12} className="text-slate-400 fill-slate-400/10 sm:scale-110" />
+                        <div className="flex items-center gap-1 sm:gap-1.5 font-bold">
+                            <span className="text-slate-400 font-black tracking-tighter hidden xs:inline flex items-center gap-1">
+                                LAT <Info size={8} />
+                            </span>
+                            <span className={clsx(
+                                "font-black leading-none mt-0.5",
+                                hasActiveRealGateway ? "text-emerald-500" : "text-slate-400"
+                            )}>
+                                {displayLatency}
+                            </span>
+                        </div>
                     </div>
-                </div>
+                </HoverTooltip>
 
                 {/* Engine Version */}
                 <div className="hidden md:flex items-center pl-1">

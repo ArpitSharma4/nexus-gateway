@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LogOut, RefreshCw, Zap, CreditCard, TrendingUp, CheckCircle2, XCircle, Clock, Activity, Settings, Code2, BarChart3 } from 'lucide-react'
+import { LogOut, RefreshCw, Zap, CreditCard, TrendingUp, CheckCircle2, XCircle, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../lib/api'
@@ -75,6 +75,14 @@ export default function DashboardPage({ session, onLogout }: Props) {
     const [loading, setLoading] = useState(true)
     const [showCheckout, setShowCheckout] = useState(false)
     const [activeTab, setActiveTab] = useState<Tab>('payments')
+    const [showGuide, setShowGuide] = useState(() => {
+        return localStorage.getItem('nexus_guide_dismissed') !== 'true'
+    })
+
+    const dismissGuide = () => {
+        localStorage.setItem('nexus_guide_dismissed', 'true')
+        setShowGuide(false)
+    }
 
     const fetchIntents = useCallback(async () => {
         setLoading(true)
@@ -200,6 +208,68 @@ export default function DashboardPage({ session, onLogout }: Props) {
                             {/* ── Payments Tab ────────────────────────────── */}
                             {activeTab === 'payments' && (
                                 <>
+                                    {/* Quick Start Guide */}
+                                    <AnimatePresence>
+                                        {showGuide && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+                                                animate={{ height: 'auto', opacity: 1, marginBottom: 24 }}
+                                                exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="bg-white/40 backdrop-blur-xl rounded-[24px] border border-white/40 p-6 relative group overflow-hidden shadow-xl shadow-indigo-500/5">
+                                                    {/* Decorative background glow */}
+                                                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/5 blur-[80px] rounded-full" />
+
+                                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                                                        <div className="space-y-1.5 flex-1">
+                                                            <div className="flex items-center gap-2 text-indigo-600 mb-2">
+                                                                <div className="bg-indigo-50 p-1.5 rounded-lg border border-indigo-100">
+                                                                    <Info size={16} />
+                                                                </div>
+                                                                <span className="text-sm font-black tracking-widest uppercase">Nexus Quick-Start Manual</span>
+                                                            </div>
+                                                            <h3 className="text-xl font-black text-slate-900 tracking-tight italic">Welcome to the future of orchestration.</h3>
+                                                            <p className="text-xs text-slate-500 font-medium max-w-lg leading-relaxed">
+                                                                Follow these three steps to transition from local simulation to global production-ready payments.
+                                                            </p>
+                                                        </div>
+
+                                                        <button
+                                                            onClick={dismissGuide}
+                                                            className="text-slate-400 hover:text-slate-900 text-[11px] font-black tracking-widest uppercase py-2 px-4 border border-slate-200 rounded-xl hover:bg-white/80 transition shadow-sm"
+                                                        >
+                                                            DISMISS MANUAL
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 relative z-10">
+                                                        {[
+                                                            { step: '01', title: 'Authenticate', desc: 'Add your Stripe/Razorpay keys in the Settings tab to initialize real connections.', tab: 'settings' as Tab },
+                                                            { step: '02', title: 'Set Rules', desc: 'Define logic to route payments by currency or amount for optimal success rates.', tab: 'settings' as Tab },
+                                                            { step: '03', title: 'Test Failover', desc: 'Use the Simulator to watch the engine handle edge cases and routing in real-time.', tab: 'payments' as Tab },
+                                                        ].map((s) => (
+                                                            <button
+                                                                key={s.step}
+                                                                onClick={() => setActiveTab(s.tab)}
+                                                                className="flex items-start gap-4 p-4 rounded-2xl bg-white/40 border border-white/60 hover:border-indigo-200 hover:bg-white/80 transition-all text-left group/step"
+                                                            >
+                                                                <span className="text-2xl font-black text-indigo-100 group-hover/step:text-indigo-200 transition-colors tabular-nums mt-1">{s.step}</span>
+                                                                <div className="space-y-1">
+                                                                    <div className="flex items-center gap-1.5 font-bold text-slate-900 group-hover/step:text-indigo-600 transition-colors">
+                                                                        {s.title}
+                                                                        <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover/step:opacity-100 group-hover/step:translate-x-0 transition-all" />
+                                                                    </div>
+                                                                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{s.desc}</p>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
                                     {/* Stats */}
                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                         {[
