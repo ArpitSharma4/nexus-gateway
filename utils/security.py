@@ -45,7 +45,7 @@ def sign_webhook_payload(payload: str, secret: str) -> str:
     Create an HMAC-SHA256 signature for a webhook payload.
 
     Merchants use this signature (sent in the ``X-Nexus-Signature`` header)
-    to verify that the request genuinely came from Nexus Gateway and that
+    to verify that the request genuinely came from Nexus Layer and that
     the body has not been tampered with in transit.
 
     Args:

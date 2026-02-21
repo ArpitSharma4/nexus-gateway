@@ -1,25 +1,24 @@
-# Nexus Gateway (Mini-Stripe)
-### A Production-Grade Payment Gateway Architecture
+# Nexus Layer (Orchestration Engine)
+### A Production-Grade Orchestration Engine
 
-Nexus Gateway is a high-performance, asynchronous payment processing engine built with FastAPI and PostgreSQL (Supabase). It simulates the end-to-end transaction lifecycle of a modern fintech platform, focusing on security, data integrity, and system reliability.
+Nexus Layer is a high-performance, asynchronous payment processing engine built with FastAPI and PostgreSQL (Supabase). It simulates the end-to-end transaction lifecycle of a modern fintech platform, focusing on security, data integrity, and system reliability.
 
 ---
 
 ## System Architecture
-Nexus Gateway follows a service-oriented architecture designed to handle high concurrency and asynchronous event delivery.
+Nexus Layer follows a service-oriented architecture designed to handle high concurrency and asynchronous event delivery.
 
 
 
-* **Merchant Layer:** API Key/Secret management with SHA-256 hashing.
-* **Transaction Engine:** State-machine logic for payment intents (Created, Processing, Succeeded/Failed).
-* **Idempotency Layer:** Prevents double-charging using unique idempotency keys.
-* **Bank Simulator:** A rules-based engine simulating authorization and fraud detection.
-* **Webhook Engine:** Asynchronous delivery of signed event payloads using HMAC-SHA256.
+*   **Merchant Layer:** API Key/Secret management with SHA-256 hashing.
+*   **Transaction Engine:** State-machine logic for payment intents (Created, Processing, Succeeded/Failed).
+*   **Idempotency Layer:** Prevents double-charging using unique idempotency keys.
+*   **Bank Simulator:** A rules-based engine simulating authorization and fraud detection.
+*   **Webhook Engine:** Asynchronous delivery of signed event payloads using HMAC-SHA256.
 
 ---
 
 ## Tech Stack
-* **Backend:** FastAPI (Python 3.12+)
 * **Database:** PostgreSQL (Managed via Supabase)
 * **ORM:** SQLAlchemy 2.0
 * **Asynchronous Tasks:** Python BackgroundTasks

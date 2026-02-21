@@ -6,7 +6,9 @@ import NexusBackground from './NexusBackground'
 const messages = [
     'Establishing secure tunnel...',
     'Fetching merchant ledger...',
-    'Nexus Gateway Active.',
+    'Nexus Layer Active.',
+    'Orchestration Engine Stable.',
+    'Layer sync in progress...',
 ]
 
 export default function NexusLoader() {

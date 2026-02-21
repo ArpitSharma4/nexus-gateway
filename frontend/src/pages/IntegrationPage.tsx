@@ -15,7 +15,7 @@ function getSnippet(tab: string, apiKey: string): string {
     const maskedKey = apiKey ? `${apiKey.slice(0, 12)}...` : 'nx_your_api_key_here'
 
     if (tab === 'javascript') {
-        return `// ── Nexus Gateway SDK ──────────────────────────
+        return `// ── Nexus Layer SDK ──────────────────────────
 // Replace stripe.confirmCardPayment with a single call
 
 const NEXUS_API = 'https://your-domain.vercel.app/api';
@@ -34,7 +34,7 @@ async function processPayment(amount, currency = 'INR') {
   const intent = await intentRes.json();
 
   // Step 2: Process the Payment
-  // Nexus automatically routes to the best gateway
+  // Nexus Layer automatically routes to the best gateway
   const processRes = await fetch(
     \`\${NEXUS_API}/payments/\${intent.payment_intent_id}/process\`,
     {
@@ -63,7 +63,7 @@ processPayment(5000, 'INR').then(console.log);`
     }
 
     if (tab === 'python') {
-        return `# ── Nexus Gateway SDK ──────────────────────────
+        return `# ── Nexus Layer SDK ──────────────────────────
 # Replace stripe.PaymentIntent.create with a single call
 
 import requests
@@ -85,7 +85,7 @@ intent = requests.post(
 
 print(f"Intent: {intent['payment_intent_id']}")
 
-# Step 2: Process — Nexus routes to the best gateway
+# Step 2: Process — Nexus Layer routes to the best gateway
 result = requests.post(
     f"{NEXUS_API}/payments/{intent['payment_intent_id']}/process",
     headers=headers,
@@ -97,7 +97,7 @@ print(f"Status:  {result['status']}")
 print(f"Trace:   {result['trace_log']}")`
     }
 
-    return `# ── Nexus Gateway — cURL ──────────────────────────
+    return `# ── Nexus Layer — cURL ──────────────────────────
 
 # Step 1: Create a Payment Intent
 curl -X POST https://your-domain.vercel.app/api/payments/create \\
@@ -132,7 +132,7 @@ export default function IntegrationPage({ apiKey }: Props) {
                     Integration Guide
                 </h2>
                 <p className="text-sm text-slate-500 mt-2 max-w-2xl">
-                    Nexus wraps complex multi-gateway logic into a single atomic API.
+                    Nexus Layer wraps complex multi-gateway logic into a single atomic API.
                     Replace <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[12px] font-mono text-indigo-600 font-bold">stripe.confirmCardPayment</code> with our streamlined orchestration layer.
                 </p>
             </div>
@@ -152,8 +152,8 @@ export default function IntegrationPage({ apiKey }: Props) {
                     <pre className="text-[12px] font-mono text-slate-400 bg-slate-50 rounded-xl p-4 overflow-x-auto leading-relaxed border border-slate-100 select-none">
                         {`const stripe = Stripe('sk_...');
 const intent = await stripe.paymentIntents.create({
-  amount: 5000, 
-  currency: 'inr'
+    amount: 5000,
+    currency: 'inr'
 });
 // ✗ No auto-failover
 // ✗ No currency routing`}

@@ -17,7 +17,7 @@ export default function LegalPage({ onBack }: Props) {
                             <div className="bg-indigo-600 text-white p-1.5 rounded-lg">
                                 <Zap size={18} />
                             </div>
-                            <span className="font-bold text-slate-900">Nexus Gateway</span>
+                            <span className="font-bold text-slate-900">Nexus Layer</span>
                         </div>
                         <button
                             onClick={onBack}

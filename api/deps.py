@@ -11,7 +11,7 @@ from utils.security import hash_api_key
 
 
 async def get_current_merchant(
-    x_api_key: str = Header(..., description="Your Nexus Gateway API key (nx_...)"),
+    x_api_key: str = Header(..., description="Your Nexus Layer API key (nx_...)"),
     db: Session = Depends(get_db),
 ) -> Merchant:
     """

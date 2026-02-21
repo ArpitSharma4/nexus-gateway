@@ -5,7 +5,7 @@ from database.session import Base
 
 class Merchant(Base):
     """
-    Represents a registered merchant on the Nexus Gateway platform.
+    Represents a registered merchant on the Nexus Layer platform.
     Each merchant authenticates via a hashed API key and can receive
     payment event notifications via their webhook URL.
     """

@@ -141,7 +141,7 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
             {/* Branding Anchor */}
             <div className="fixed left-6 top-1/2 -translate-y-1/2 -rotate-90 origin-left pointer-events-none select-none hidden 2xl:block">
                 <span className="text-[10px] font-black tracking-[0.4em] text-slate-300 opacity-40 uppercase">
-                    NEXUS GATEWAY V2.0 // ORCHESTRATION_ENGINE
+                    NEXUS LAYER V2.0 // ORCHESTRATION_ENGINE
                 </span>
             </div>
 
@@ -153,7 +153,7 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                             <div className="bg-indigo-600 text-white p-1.5 rounded-lg" style={{ minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Zap size={18} />
                             </div>
-                            <span className="font-bold text-slate-900">Nexus Gateway</span>
+                            <span className="font-bold text-slate-900">Nexus Layer</span>
                             <span className="hidden sm:inline text-slate-300 mx-1">|</span>
                             <span className="hidden sm:inline text-sm text-slate-500">{session.merchantName}</span>
                         </div>

@@ -161,7 +161,7 @@ export default function CheckoutModal({ onClose, onComplete, onNavigateLegal }: 
                             <Zap size={16} fill="currentColor" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-black text-slate-900 leading-none">NEXUS GATEWAY</span>
+                            <span className="text-sm font-black text-slate-900 leading-none">NEXUS LAYER</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Checkout Simulator v2.0</span>
                         </div>
                     </div>
@@ -474,7 +474,6 @@ export default function CheckoutModal({ onClose, onComplete, onNavigateLegal }: 
                     </AnimatePresence>
                 </motion.div>
             </motion.div>
-            <LegalModal isOpen={showLegal} onClose={() => setShowLegal(false)} />
         </div>
     )
 }

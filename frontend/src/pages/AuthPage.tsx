@@ -162,7 +162,7 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
             {/* Branding Anchor */}
             <div className="fixed left-6 top-1/2 -translate-y-1/2 -rotate-90 origin-left pointer-events-none select-none hidden 2xl:block">
                 <span className="text-[10px] font-black tracking-[0.4em] text-slate-300 opacity-40 uppercase">
-                    NEXUS GATEWAY V1.0 // SYSTEMS_ACTIVE
+                    NEXUS LAYER V1.0 // SYSTEMS_ACTIVE
                 </span>
             </div>
 
@@ -187,7 +187,7 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
                                 <Zap size={20} fill="white" />
                             </div>
                             <span className="text-2xl font-black text-slate-900 tracking-wider">
-                                NEXUS GATEWAY
+                                NEXUS LAYER
                             </span>
                         </div>
 

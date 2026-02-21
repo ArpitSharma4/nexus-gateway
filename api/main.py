@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
 # ── App Instance ───────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Nexus Gateway",
+    title="Nexus Layer",
     description=(
         "A real-time payment orchestration engine. "
         "Multi-gateway routing (Stripe, Razorpay, Simulator), "
