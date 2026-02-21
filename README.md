@@ -56,25 +56,21 @@ Every webhook payload includes an X-Nexus-Signature header. This allows merchant
    git clone [https://github.com/your-username/nexus-gateway.git](https://github.com/your-username/nexus-gateway.git)
    cd nexus-gateway
    
-## 2. Environment Variables
+```bash
+# 1. Environment Setup
+# Create a .env file with your Supabase credentials:
+# DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres
+# WEBHOOK_SECRET=your_secret_here
 
-Create a `.env` file based on `.env.example`:
-
-```env
-DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres
-WEBHOOK_SECRET=your_secret_here
-3. Installation and Initialization
-Bash
+# 2. Installation and Initialization
 pip install -r requirements.txt
 python init_db.py
-4. Run Server
-Bash
+
+# 3. Run the Gateway Server
 uvicorn main:app --reload
-Testing the Lifecycle
-Onboarding: Create a merchant via POST /merchants/signup and save your api_key.
 
-Create Intent: Create a payment via POST /payments/create using the X-API-KEY header.
-
-Process: Use the payment_intent_id to call POST /payments/{id}/process.
-
-Webhook: Run mock_merchant_listener.py to see the live, signed event delivery.
+# 4. Testing the Transaction Lifecycle
+# Step A: Onboarding - Create a merchant via POST /merchants/signup and save your api_key.
+# Step B: Create Intent - Create a payment via POST /payments/create using X-API-KEY.
+# Step C: Process - Use the payment_intent_id to call POST /payments/{id}/process.
+# Step D: Webhook - Run mock_merchant_listener.py to see live, signed event delivery.
