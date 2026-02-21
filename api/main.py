@@ -1,9 +1,10 @@
-"""
-main.py — Nexus Gateway application entry point.
-"""
-
+import sys
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Ensure the project root is in the path for Vercel
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api.routes import merchants, payments
 
