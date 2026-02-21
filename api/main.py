@@ -5,7 +5,7 @@ main.py — Nexus Gateway application entry point.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import merchants, payments
+from api.routes import merchants, payments
 
 # ── App Instance ───────────────────────────────────────────────────────────────
 
