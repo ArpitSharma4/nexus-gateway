@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
-import { CreditCard, ShieldCheck, Zap, Activity, AlertCircle, RefreshCw, X, Check, Lock, ChevronRight, Globe, Info, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { Zap, X, Check, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import api from '../lib/api'
-import LegalModal from './LegalModal'
 
 // High-performance transaction simulator with live trace log
 
@@ -41,6 +40,7 @@ const CURRENCIES = [
 type Props = {
     onClose: () => void
     onComplete: (result: Result) => void
+    onNavigateLegal: () => void
 }
 
 /* ── Animation variants ─────────────────────────────────────────────── */
@@ -63,12 +63,11 @@ const GATEWAY_COLORS: Record<string, string> = {
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
-export default function CheckoutModal({ onClose, onComplete }: Props) {
+export default function CheckoutModal({ onClose, onComplete, onNavigateLegal }: Props) {
     const [step, setStep] = useState<Step>('form')
     const [amount, setAmount] = useState('500.00')
     const [currency, setCurrency] = useState('INR')
     const [agreedToTerms, setAgreedToTerms] = useState(false)
-    const [showLegal, setShowLegal] = useState(false)
     const [cardNumber, setCardNumber] = useState('')
     const [cvv, setCvv] = useState('')
     const [error, setError] = useState('')
@@ -294,7 +293,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                                             <Check size={10} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                                         </div>
                                         <span className="text-[11px] text-slate-500 font-medium leading-tight group-hover:text-slate-700 transition-colors">
-                                            I agree to the Nexus Beta <button type="button" onClick={(e) => { e.preventDefault(); setShowLegal(true); }} className="text-indigo-600 font-bold hover:underline">Terms & Conditions</button>. I understand this is an experimental system.
+                                            I agree to the Nexus Beta <button type="button" onClick={(e) => { e.preventDefault(); onNavigateLegal(); }} className="text-indigo-600 font-bold hover:underline">Terms & Conditions</button>. I understand this is an experimental system.
                                         </span>
                                     </label>
                                 </div>

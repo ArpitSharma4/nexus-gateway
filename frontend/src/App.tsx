@@ -4,9 +4,12 @@ import { Analytics } from '@vercel/analytics/react'
 import api, { getSavedApiKey, setApiKey, clearApiKey } from './lib/api'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
+import LegalPage from './pages/LegalPage'
 import SystemMonitor from './components/SystemMonitor'
 import NexusLoader from './components/NexusLoader'
 import { MerchantProvider } from './contexts/MerchantContext'
+
+export type View = 'app' | 'legal'
 
 export type Session = {
     apiKey: string
@@ -51,6 +54,12 @@ export default function App() {
         setSession(null)
     }
 
+    const [view, setView] = useState<View>('app')
+
+    if (view === 'legal') {
+        return <LegalPage onBack={() => setView('app')} />
+    }
+
     return (
         <div className="relative min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
@@ -72,7 +81,7 @@ export default function App() {
                         exit={{ opacity: 0, scale: 1.05 }}
                         transition={{ duration: 0.4, ease: 'easeOut' }}
                     >
-                        <AuthPage onLogin={handleLogin} />
+                        <AuthPage onLogin={handleLogin} onNavigateLegal={() => setView('legal')} />
                     </motion.div>
                 ) : (
                     <MerchantProvider>
@@ -82,7 +91,7 @@ export default function App() {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                         >
-                            <DashboardPage session={session} onLogout={handleLogout} />
+                            <DashboardPage session={session} onLogout={handleLogout} onNavigateLegal={() => setView('legal')} />
                         </motion.div>
                         <SystemMonitor />
                     </MerchantProvider>

@@ -67,9 +67,13 @@ function GatewayBadge({ gateway }: { gateway: string | null }) {
     )
 }
 
-type Props = { session: Session; onLogout: () => void }
+type Props = {
+    session: Session;
+    onLogout: () => void;
+    onNavigateLegal: () => void;
+}
 
-export default function DashboardPage({ session, onLogout }: Props) {
+export default function DashboardPage({ session, onLogout, onNavigateLegal }: Props) {
     const { configs: _configs, rules: _rules, loading: _configsLoading } = useMerchant()
     const [intents, setIntents] = useState<PaymentIntent[]>([])
     const [loading, setLoading] = useState(true)
@@ -406,7 +410,7 @@ export default function DashboardPage({ session, onLogout }: Props) {
                             )}
 
                             {/* ── Settings Tab ────────────────────────────── */}
-                            {activeTab === 'settings' && <SettingsPage session={session} />}
+                            {activeTab === 'settings' && <SettingsPage session={session} onNavigateLegal={onNavigateLegal} />}
 
                             {/* ── Integration Tab ─────────────────────────── */}
                             {activeTab === 'integration' && <IntegrationPage apiKey={session.apiKey} />}
@@ -418,6 +422,7 @@ export default function DashboardPage({ session, onLogout }: Props) {
                     <CheckoutModal
                         onClose={() => setShowCheckout(false)}
                         onComplete={handleCheckoutComplete}
+                        onNavigateLegal={onNavigateLegal}
                     />
                 )}
             </div>

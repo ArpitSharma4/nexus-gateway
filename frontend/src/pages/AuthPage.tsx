@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Zap, AlertCircle, Copy, Check, KeyRound, User, Shield, Radio, Activity } from 'lucide-react'
+import { Zap, AlertCircle, Copy, Check, KeyRound, User, Shield, Radio } from 'lucide-react'
 import clsx from 'clsx'
 import api, { setApiKey } from '../lib/api'
 import type { Session } from '../App'
 import NexusBackground from '../components/NexusBackground'
 
 type Tab = 'signup' | 'login'
-type Props = { onLogin: (s: Session) => void }
+type Props = {
+    onLogin: (s: Session) => void
+    onNavigateLegal: () => void
+}
 
 /* ── Inline SVG Illustration ───────────────────────────────────────── */
 
@@ -95,13 +98,13 @@ function FeatureItem({ icon: Icon, title, desc }: { icon: any, title: string, de
 
 /* ── Auth Page ─────────────────────────────────────────────────────── */
 
-export default function AuthPage({ onLogin }: Props) {
+export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
     const [tab, setTab] = useState<Tab>('signup')
 
     const [name, setName] = useState('')
     const [signupLoading, setSignupLoading] = useState(false)
     const [signupError, setSignupError] = useState('')
-    const [newKey, setNewKey] = useState<{ key: string; biz: string } | null>(null)
+    const [newKey, setNewKey] = useState<{ key: string; biz: string; id: string } | null>(null)
     const [copied, setCopied] = useState(false)
 
     const [apiKeyInput, setApiKeyInput] = useState('')
@@ -116,7 +119,7 @@ export default function AuthPage({ onLogin }: Props) {
         setSignupError('')
         try {
             const { data } = await api.post('/merchants/signup', { business_name: name })
-            setNewKey({ key: data.api_key, biz: data.name })
+            setNewKey({ key: data.api_key, biz: data.name, id: data.id })
         } catch (err: any) {
             const detail = err.response?.data?.detail
             if (Array.isArray(detail)) {
@@ -135,7 +138,7 @@ export default function AuthPage({ onLogin }: Props) {
         setCopied(true)
         setTimeout(() => {
             setApiKey(newKey.key)
-            onLogin({ apiKey: newKey.key, merchantName: newKey.biz })
+            onLogin({ apiKey: newKey.key, merchantName: newKey.biz, merchantId: newKey.id })
         }, 800)
     }
 
@@ -146,7 +149,7 @@ export default function AuthPage({ onLogin }: Props) {
         try {
             const { data } = await api.post('/merchants/login', { api_key: apiKeyInput })
             setApiKey(apiKeyInput)
-            onLogin({ apiKey: apiKeyInput, merchantName: data.name })
+            onLogin({ apiKey: apiKeyInput, merchantName: data.name, merchantId: data.id })
         } catch (err: any) {
             setLoginError(err.response?.data?.detail || 'Invalid API key.')
         } finally {
@@ -360,6 +363,16 @@ export default function AuthPage({ onLogin }: Props) {
                         {/* Soft decorative background circles */}
                         <div className="absolute top-[-40px] right-[-40px] w-32 h-32 rounded-full bg-indigo-50/30" />
                         <div className="absolute bottom-10 left-[-20px] w-20 h-20 rounded-full bg-blue-50/20" />
+
+                        {/* Footer Link */}
+                        <div className="absolute bottom-6 text-[10px] font-bold text-slate-300 tracking-widest uppercase">
+                            <button
+                                onClick={onNavigateLegal}
+                                className="hover:text-indigo-400 transition"
+                            >
+                                Privacy & Terms (Beta)
+                            </button>
+                        </div>
                     </div>
 
                 </div>
