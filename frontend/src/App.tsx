@@ -5,15 +5,17 @@ import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import SystemMonitor from './components/SystemMonitor'
 import NexusLoader from './components/NexusLoader'
+import { MerchantProvider } from './contexts/MerchantContext'
 
 export type Session = {
     apiKey: string
+    merchantId: string
     merchantName: string
 }
 
 export default function App() {
     const [session, setSession] = useState<Session | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+    const [loading, setLoading] = useState(true)
 
     // Initial session restoration
     useEffect(() => {
@@ -21,26 +23,26 @@ export default function App() {
         const saved = getSavedApiKey()
 
         if (!saved) {
-            minDelay.then(() => setIsLoading(false))
+            minDelay.then(() => setLoading(false))
             return
         }
 
         const fetchData = api.post('/merchants/login', { api_key: saved })
             .then(({ data }) => {
                 setApiKey(saved)
-                setSession({ apiKey: saved, merchantName: data.name })
+                setSession({ apiKey: saved, merchantId: data.id, merchantName: data.name })
             })
             .catch(() => clearApiKey())
 
-        Promise.all([fetchData, minDelay]).finally(() => setIsLoading(false))
+        Promise.all([fetchData, minDelay]).finally(() => setLoading(false))
     }, [])
 
     const handleLogin = async (newSession: Session) => {
-        setIsLoading(true)
+        setLoading(true)
         const minDelay = new Promise(resolve => setTimeout(resolve, 2500))
         setSession(newSession)
         await minDelay
-        setIsLoading(false)
+        setLoading(false)
     }
 
     const handleLogout = () => {
@@ -51,7 +53,7 @@ export default function App() {
     return (
         <div className="relative min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
-                {isLoading ? (
+                {loading ? (
                     <motion.div
                         key="loader"
                         initial={{ opacity: 0 }}
@@ -72,18 +74,19 @@ export default function App() {
                         <AuthPage onLogin={handleLogin} />
                     </motion.div>
                 ) : (
-                    <motion.div
-                        key="dashboard"
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    >
-                        <DashboardPage session={session} onLogout={handleLogout} />
-                    </motion.div>
+                    <MerchantProvider>
+                        <motion.div
+                            key="dashboard"
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                            <DashboardPage session={session} onLogout={handleLogout} />
+                        </motion.div>
+                        <SystemMonitor />
+                    </MerchantProvider>
                 )}
             </AnimatePresence>
-
-            <SystemMonitor />
         </div>
     )
 }

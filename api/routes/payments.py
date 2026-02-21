@@ -3,7 +3,7 @@ api/routes/payments.py — Payment Intent endpoints.
 """
 
 import secrets
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, status
 from fastapi.responses import JSONResponse
@@ -43,6 +43,7 @@ class PaymentIntentResponse(BaseModel):
     currency: str
     status: str
     idempotency_key: str
+    gateway_used: Optional[str] = None
 
 
 class ProcessPaymentRequest(BaseModel):
@@ -60,11 +61,19 @@ class ProcessPaymentRequest(BaseModel):
     )
 
 
+class TraceEntry(BaseModel):
+    timestamp: str
+    source: str
+    message: str
+
+
 class ProcessPaymentResponse(BaseModel):
     payment_intent_id: str
     status: str
+    gateway_used: str
     bank_decision: str
     bank_reason: str
+    trace_log: List[TraceEntry] = []
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
@@ -93,6 +102,7 @@ def list_payment_intents(
             "currency": i.currency,
             "status": i.status,
             "idempotency_key": i.idempotency_key,
+            "gateway_used": i.gateway_used,
         }
         for i in intents
     ]
@@ -138,8 +148,9 @@ def create_payment_intent(
         merchant_id=intent.merchant_id,
         amount=intent.amount,
         currency=intent.currency,
-        status=intent.status,  # Already a plain string (VARCHAR column)
+        status=intent.status,
         idempotency_key=intent.idempotency_key,
+        gateway_used=intent.gateway_used,
     )
 
     http_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
@@ -151,12 +162,11 @@ def create_payment_intent(
     response_model=ProcessPaymentResponse,
     summary="Process a Payment Intent",
     description=(
-        "Submits a PaymentIntent for authorization against the simulated bank. "
+        "Submits a PaymentIntent for authorization through the Nexus routing engine. "
         "Drives the lifecycle: **CREATED → PROCESSING → SUCCEEDED | FAILED**. "
-        "\n\n**Test scenarios:**\n"
-        "- Card ending in `0000` → FAILED (Insufficient Funds)\n"
-        "- Amount > 100,000 → FAILED (Fraud Risk)\n"
-        "- Any other card + amount ≤ 100,000 → SUCCEEDED"
+        "The routing engine selects the best gateway based on merchant rules and "
+        "automatically fails over to backup gateways on errors. "
+        "A real-time trace log is returned showing every routing decision."
     ),
     responses={
         200: {"description": "Payment processed (succeeded or failed)."},
@@ -165,14 +175,14 @@ def create_payment_intent(
         401: {"description": "Invalid or missing API key."},
     },
 )
-def process_payment_intent(
+async def process_payment_intent(
     payment_intent_id: str,
     body: ProcessPaymentRequest,
     background_tasks: BackgroundTasks,
     merchant: Merchant = Depends(get_current_merchant),
     db: Session = Depends(get_db),
 ):
-    intent, bank_resp = process_payment(
+    intent, result = await process_payment(
         db=db,
         payment_intent_id=payment_intent_id,
         card_number=body.card_number,
@@ -183,6 +193,8 @@ def process_payment_intent(
     return ProcessPaymentResponse(
         payment_intent_id=intent.id,
         status=intent.status,
-        bank_decision=bank_resp.decision.value,
-        bank_reason=bank_resp.reason,
+        gateway_used=result["gateway_used"],
+        bank_decision=result["bank_decision"],
+        bank_reason=result["bank_reason"],
+        trace_log=[TraceEntry(**t) for t in result["trace_log"]],
     )

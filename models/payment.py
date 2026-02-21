@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Text
 from database.session import Base
 
 
@@ -28,3 +28,5 @@ class PaymentIntent(Base):
     currency = Column(String(3), nullable=False, default="INR")
     status = Column(String(20), nullable=False, default=PaymentStatus.CREATED.value)
     idempotency_key = Column(String, nullable=False, unique=True, index=True)
+    gateway_used = Column(String(50), nullable=True)   # Which gateway processed this payment
+    trace_log = Column(Text, nullable=True)            # JSON trace of routing decisions

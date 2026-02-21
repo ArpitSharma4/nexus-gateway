@@ -20,8 +20,14 @@ if "?" in DATABASE_URL:
 # Create the SQLAlchemy engine with NullPool for serverless optimization.
 # pool_pre_ping=True ensures we check connection health before use,
 # which is essential when the remote pooler (Supavisor) might drop idle ones.
+# DATABASE_URL = "postgresql://postgres.xxx:password@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+
+# We use port 6543 for Supabase connection pooling (Transaction mode)
+# In serverless/FastAPI envs, it's best to use NullPool to avoid
+# keeping too many idle connections on the app side when using a pooler.
+
 engine = create_engine(
-    DATABASE_URL,
+    DATABASE_URL.replace(":5432", ":6543"),
     poolclass=NullPool,
     pool_pre_ping=True
 )

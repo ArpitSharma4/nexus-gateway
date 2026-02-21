@@ -1,20 +1,28 @@
 import { useState } from 'react'
-import { X, Zap, Check } from 'lucide-react'
+import { X, Zap, Check, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import api from '../lib/api'
 
-// High-performance transaction simulator
+// High-performance transaction simulator with live trace log
 
 type Step = 'form' | 'processing' | 'result'
+
+type TraceEntry = {
+    timestamp: string
+    source: string
+    message: string
+}
 
 type Result = {
     payment_intent_id: string
     status: string
+    gateway_used: string
     bank_decision: string
     bank_reason: string
     amount: number
     currency: string
+    trace_log: TraceEntry[]
 }
 
 const TEST_CARDS = [
@@ -24,7 +32,7 @@ const TEST_CARDS = [
 
 type Props = {
     onClose: () => void
-    onComplete: () => void
+    onComplete: (result: Result) => void
 }
 
 /* ── Animation variants ─────────────────────────────────────────────── */
@@ -36,6 +44,13 @@ const slideVariants = {
 }
 
 const transition = { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const }
+
+
+const GATEWAY_COLORS: Record<string, string> = {
+    stripe: 'bg-violet-500',
+    razorpay: 'bg-blue-500',
+    simulator: 'bg-emerald-500',
+}
 
 
 /* ── Component ──────────────────────────────────────────────────────── */
@@ -60,11 +75,11 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
 
         const messages = [
             'Initializing secure handshake...',
-            'Routing through Mumbai cluster [V4]...',
+            'Querying routing engine...',
             'AES-256 session established.',
-            'Verifying idempotency chain...',
-            'Authorizing with primary bank vault...',
-            'Calculating fraud risk vectors...',
+            'Evaluating gateway health matrix...',
+            'Selecting optimal gateway...',
+            'Executing failover pipeline...',
             'Nexus node sync complete.',
             'Finalizing atomic transaction...'
         ]
@@ -125,7 +140,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <motion.div
-                className="bg-white rounded-[24px] shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden relative"
+                className="bg-white rounded-[24px] shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden relative"
                 initial={{ opacity: 0, scale: 0.9, y: 30 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
@@ -138,7 +153,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-black text-slate-900 leading-none">NEXUS GATEWAY</span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Checkout Simulator v1.0</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Checkout Simulator v2.0</span>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-900 transition p-1.5 rounded-xl hover:bg-slate-100">
@@ -306,7 +321,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                         {step === 'result' && result && (
                             <motion.div
                                 key="result"
-                                className="space-y-6"
+                                className="space-y-5"
                                 variants={slideVariants}
                                 initial="enter"
                                 animate="center"
@@ -349,14 +364,54 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                                     {[
                                         { label: 'Network ID', value: result.payment_intent_id.slice(0, 24) + '...', mono: true },
                                         { label: 'Final Value', value: new Intl.NumberFormat('en-IN', { style: 'currency', currency: result.currency }).format(result.amount / 100) },
+                                        { label: 'Gateway', value: result.gateway_used, mono: false, badge: true },
                                         { label: 'Atomic Key', value: ik, mono: true },
                                     ].map(row => (
                                         <div key={row.label} className="flex items-center justify-between text-[11px]">
                                             <span className="font-black text-slate-400 uppercase tracking-widest">{row.label}</span>
-                                            <span className={clsx('font-bold text-slate-700', row.mono && 'font-mono text-indigo-600')}>{row.value}</span>
+                                            {row.badge ? (
+                                                <span className="inline-flex items-center gap-1.5 font-bold text-slate-700 capitalize">
+                                                    <span className={clsx('w-2 h-2 rounded-full', GATEWAY_COLORS[row.value || ''] || 'bg-slate-400')} />
+                                                    {row.value}
+                                                </span>
+                                            ) : (
+                                                <span className={clsx('font-bold text-slate-700', row.mono && 'font-mono text-indigo-600')}>{row.value}</span>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
+
+                                {/* Live Trace Log */}
+                                {result.trace_log && result.trace_log.length > 0 && (
+                                    <div className="bg-slate-950 rounded-2xl p-4 overflow-hidden">
+                                        <div className="flex items-center gap-1.5 mb-3">
+                                            <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
+                                            <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Routing Trace Log</span>
+                                        </div>
+                                        <div className="space-y-1.5 max-h-[140px] overflow-y-auto custom-scrollbar">
+                                            {result.trace_log.map((entry, idx) => (
+                                                <motion.div
+                                                    key={idx}
+                                                    initial={{ x: -8, opacity: 0 }}
+                                                    animate={{ x: 0, opacity: 1 }}
+                                                    transition={{ delay: idx * 0.08 }}
+                                                    className="flex items-start gap-2 text-[11px] font-mono"
+                                                >
+                                                    <ArrowRight size={10} className="text-cyan-500/50 mt-0.5 shrink-0" />
+                                                    <span className="text-slate-500">{entry.timestamp?.split('T')[1]?.split('.')[0] || entry.timestamp}</span>
+                                                    <span className={clsx(
+                                                        'font-bold',
+                                                        entry.source === 'FAILOVER' ? 'text-amber-400' :
+                                                            entry.source === 'ROUTER' ? 'text-cyan-400' :
+                                                                entry.source === 'GATEWAY' ? 'text-emerald-400' :
+                                                                    'text-slate-400'
+                                                    )}>[{entry.source}]</span>
+                                                    <span className="text-slate-300 break-all">{entry.message}</span>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex gap-2 pt-2">
                                     <button
@@ -366,7 +421,7 @@ export default function CheckoutModal({ onClose, onComplete }: Props) {
                                         RE-INITIATE
                                     </button>
                                     <button
-                                        onClick={onComplete}
+                                        onClick={() => onComplete(result)}
                                         className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[11px] py-4 rounded-2xl transition-all uppercase tracking-widest shadow-xl shadow-indigo-100"
                                     >
                                         COMMIT & EXIT

@@ -20,6 +20,8 @@ type Particle = {
 type NexusBackgroundProps = {
     /** When true, particles speed up and shift to a brighter blue. */
     active?: boolean
+    /** Current active tab to shift focus */
+    tab?: string
     children: React.ReactNode
 }
 
@@ -37,6 +39,12 @@ const PARALLAX_RANGE = 0.45     // max parallax slowdown (depth=0 → 1-0.45 = 5
 const GLOW_RADIUS = 220         // px around hovered input to trigger glow
 const GLOW_DECAY = 0.97
 
+const FOCUS_SHIFTS: Record<string, number> = {
+    payments: 0,
+    settings: -80,
+    integration: 80,
+}
+
 const RIPPLE_SPEED = 4.5        // pixels per frame expansion
 const RIPPLE_MAX_DIST = 1400    // max radius before fading
 const SURGE_BOOST = 1.5         // 50% increase
@@ -47,7 +55,7 @@ const GLOW_COLOR = { r: 99, g: 102, b: 241 }     // indigo-500
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
-export default function NexusBackground({ active = false, children }: NexusBackgroundProps) {
+export default function NexusBackground({ active = false, tab = 'payments', children }: NexusBackgroundProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const particles = useRef<Particle[]>([])
     const mouse = useRef({ x: -9999, y: -9999 })
@@ -56,6 +64,10 @@ export default function NexusBackground({ active = false, children }: NexusBackg
     const activeRef = useRef(active)
     const startTime = useRef(Date.now())
 
+    // Focus shift state
+    const currentFocusX = useRef(0)
+    const targetFocusX = useRef(0)
+
     // Network Surge & Ripple State
     const [isSurging, setIsSurging] = useState(false)
     const surgeRef = useRef(false)
@@ -63,6 +75,7 @@ export default function NexusBackground({ active = false, children }: NexusBackg
 
     activeRef.current = active
     surgeRef.current = isSurging
+    targetFocusX.current = FOCUS_SHIFTS[tab] || 0
 
     /* ── Init particles ────────────────────────────────────────────── */
 
@@ -111,6 +124,10 @@ export default function NexusBackground({ active = false, children }: NexusBackg
         const elapsed = now - startTime.current
         const hic = hoveredInputCenter.current
 
+        // Smooth focus interpolation
+        currentFocusX.current += (targetFocusX.current - currentFocusX.current) * 0.05
+        const fx = currentFocusX.current
+
         // Update ripple
         if (rippleDist.current !== -1) {
             rippleDist.current += RIPPLE_SPEED
@@ -123,7 +140,7 @@ export default function NexusBackground({ active = false, children }: NexusBackg
         ctx.scale(dpr, dpr)
 
         /* ── Radial spotlight gradient ────────────────────────────── */
-        const grd = ctx.createRadialGradient(w / 2, h * 0.42, 0, w / 2, h * 0.42, Math.max(w, h) * 0.7)
+        const grd = ctx.createRadialGradient(w / 2 + fx, h * 0.42, 0, w / 2 + fx, h * 0.42, Math.max(w, h) * 0.7)
         grd.addColorStop(0, 'rgba(255,255,255,0.55)')
         grd.addColorStop(0.45, 'rgba(255,255,255,0.12)')
         grd.addColorStop(1, 'rgba(224,231,255,0.18)')  // #e0e7ff
@@ -233,6 +250,57 @@ export default function NexusBackground({ active = false, children }: NexusBackg
             }
         }
 
+        /* ── Neural Path Animation (active only) ──────────────────── */
+        if (isActive) {
+            const pathCount = 4
+            const t = elapsed * 0.001
+            for (let i = 0; i < pathCount; i++) {
+                const yBase = h * (0.25 + i * 0.17)
+                const phase = i * 1.2
+                const progress = ((t * 0.4 + phase) % 2) / 2  // 0→1 loop
+
+                // Flowing dot position
+                const dotX = progress * w * 1.3 - w * 0.15
+                const dotY = yBase + Math.sin(dotX * 0.008 + phase) * 30
+
+                // Draw trailing glow line
+                const trailLen = 180
+                ctx.save()
+                ctx.globalCompositeOperation = 'lighter'
+                const trailGrd = ctx.createLinearGradient(dotX - trailLen, dotY, dotX, dotY)
+                trailGrd.addColorStop(0, 'rgba(99,102,241,0)')
+                trailGrd.addColorStop(0.7, `rgba(99,102,241,${0.06 + i * 0.015})`)
+                trailGrd.addColorStop(1, `rgba(139,92,246,${0.12 + i * 0.02})`)
+                ctx.strokeStyle = trailGrd
+                ctx.lineWidth = 1.5
+                ctx.beginPath()
+                for (let x = dotX - trailLen; x <= dotX; x += 4) {
+                    const y = yBase + Math.sin(x * 0.008 + phase) * 30
+                    if (x === dotX - trailLen) ctx.moveTo(x, y)
+                    else ctx.lineTo(x, y)
+                }
+                ctx.stroke()
+
+                // Draw the glowing head dot
+                const headGrd = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 12)
+                headGrd.addColorStop(0, 'rgba(139,92,246,0.6)')
+                headGrd.addColorStop(0.5, 'rgba(99,102,241,0.15)')
+                headGrd.addColorStop(1, 'rgba(99,102,241,0)')
+                ctx.fillStyle = headGrd
+                ctx.beginPath()
+                ctx.arc(dotX, dotY, 12, 0, Math.PI * 2)
+                ctx.fill()
+
+                // Inner bright dot
+                ctx.fillStyle = 'rgba(199,210,254,0.8)'
+                ctx.beginPath()
+                ctx.arc(dotX, dotY, 2, 0, Math.PI * 2)
+                ctx.fill()
+
+                ctx.restore()
+            }
+        }
+
         ctx.restore()
         animId.current = requestAnimationFrame(draw)
     }, [])
@@ -249,9 +317,11 @@ export default function NexusBackground({ active = false, children }: NexusBackg
             canvas.height = window.innerHeight * dpr
             canvas.style.width = window.innerWidth + 'px'
             canvas.style.height = window.innerHeight + 'px'
-            if (particles.current.length === 0) {
-                const count = window.innerWidth < 768 ? 72 : 144
-                initParticles(window.innerWidth, window.innerHeight, count)
+
+            // Re-init particles if count should change or if they don't exist
+            const targetCount = window.innerWidth < 768 ? 72 : 144
+            if (particles.current.length === 0 || Math.abs(particles.current.length - targetCount) > 10) {
+                initParticles(window.innerWidth, window.innerHeight, targetCount)
             }
         }
 

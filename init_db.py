@@ -14,8 +14,10 @@ from database.session import engine, Base
 
 # Import all models so that they are registered on the Base metadata
 # before we call create_all. Without these imports, the tables won't be created.
-import models.merchant   # noqa: F401
-import models.payment    # noqa: F401
+import models.merchant       # noqa: F401
+import models.payment        # noqa: F401
+import models.gateway        # noqa: F401
+import models.routing_rule   # noqa: F401
 
 
 def init_db():
@@ -23,7 +25,8 @@ def init_db():
     print(f"  Engine: {engine.url}")
     print("Creating tables...")
     Base.metadata.create_all(bind=engine)
-    print("✅ All tables created successfully!")
+    print("All tables created successfully!")
+    print("  Tables: merchants, payment_intents, gateway_configs, gateway_health, routing_rules")
 
 
 if __name__ == "__main__":
