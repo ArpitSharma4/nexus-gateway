@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, X, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight, ChevronLeft, ShieldAlert } from 'lucide-react'
+import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, X, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight, ChevronLeft, ShieldAlert, Zap } from 'lucide-react'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../lib/api'
@@ -82,6 +82,13 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
     const [totalCount, setTotalCount] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
     const [filterConfig, setFilterConfig] = useState<{ sort: string; status: string }>({ sort: 'none', status: 'all' })
+    const [stats, setStats] = useState<{ total: number; succeeded: number; failed: number; volume: number; gatewayBreakdown: Record<string, number> }>({
+        total: 0,
+        succeeded: 0,
+        failed: 0,
+        volume: 0,
+        gatewayBreakdown: {}
+    })
     const resultsPerPage = 10
 
     const [showCheckout, setShowCheckout] = useState(false)
@@ -124,6 +131,15 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
             })
             setIntents(data.items)
             setTotalCount(data.total)
+            if (data.stats) {
+                setStats({
+                    total: data.stats.total_all,
+                    succeeded: data.stats.total_succeeded,
+                    failed: data.stats.total_failed,
+                    volume: data.stats.total_volume,
+                    gatewayBreakdown: data.stats.gateway_breakdown || {}
+                })
+            }
         } catch {
             // silently handle — user will see empty table
         } finally {
@@ -166,21 +182,9 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
         setTimeout(fetchIntents, 2000)
     }
 
-    const stats = {
-        total: intents.length,
-        succeeded: intents.filter(i => i.status === 'succeeded').length,
-        failed: intents.filter(i => i.status === 'failed').length,
-        volume: intents.filter(i => i.status === 'succeeded').reduce((s, i) => s + i.amount, 0),
-    }
-
-    // Gateway volume breakdown
-    const gatewayVolume = intents
-        .filter(i => i.status === 'succeeded' && i.gateway_used)
-        .reduce<Record<string, number>>((acc, i) => {
-            acc[i.gateway_used!] = (acc[i.gateway_used!] || 0) + i.amount
-            return acc
-        }, {})
-    const totalGwVolume = Object.values(gatewayVolume).reduce((a, b) => a + b, 0) || 1
+    // Gateway volume breakdown (Server-side aggregated)
+    const gatewayVolume = stats.gatewayBreakdown
+    const totalGwVolume = Object.values(gatewayVolume).reduce((a, b) => a + (b as number), 0) || 1
 
     return (
         <NexusBackground active={showCheckout} tab={activeTab}>
@@ -196,8 +200,8 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                 <header className="bg-white border-b border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            <div className="bg-indigo-600 text-white p-1.5 rounded-lg font-bold" style={{ minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                N
+                            <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-100 flex items-center justify-center" style={{ minWidth: '32px', minHeight: '32px' }}>
+                                <Zap size={18} fill="currentColor" />
                             </div>
                             <span className="font-bold text-slate-900">Nexus Layer</span>
                             <span className="hidden sm:inline text-slate-300 mx-1">|</span>

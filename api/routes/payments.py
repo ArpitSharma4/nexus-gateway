@@ -108,15 +108,34 @@ def list_payment_intents(
         query = query.order_by(PaymentIntent.id.desc())
 
     # ── Total Count (for pagination) ───────────────────────────────────────
-    total_count = query.count()
+    total_filtered = query.count()
+
+    # ── Global Stats (Not filtered by status) ─────────────────────────────
+    from sqlalchemy import func
+    base_query = db.query(PaymentIntent).filter(PaymentIntent.merchant_id == merchant.id)
+    
+    stats = {
+        "total_all": base_query.count(),
+        "total_succeeded": base_query.filter(PaymentIntent.status == "succeeded").count(),
+        "total_failed": base_query.filter(PaymentIntent.status == "failed").count(),
+        "total_volume": base_query.filter(PaymentIntent.status == "succeeded").with_entities(func.sum(PaymentIntent.amount)).scalar() or 0,
+        "gateway_breakdown": {
+            row[0]: row[1]
+            for row in db.query(PaymentIntent.gateway_used, func.sum(PaymentIntent.amount))
+            .filter(PaymentIntent.merchant_id == merchant.id, PaymentIntent.status == "succeeded")
+            .group_by(PaymentIntent.gateway_used)
+            .all()
+        }
+    }
 
     # ── Pagination ─────────────────────────────────────────────────────────
     intents = query.offset((page - 1) * limit).limit(limit).all()
 
     return {
-        "total": total_count,
+        "total": total_filtered,
         "page": page,
         "limit": limit,
+        "stats": stats,
         "items": [
             {
                 "payment_intent_id": i.id,
