@@ -30,7 +30,7 @@ Nexus Layer follows a service-oriented architecture designed to handle high conc
 ## Key Engineering Features
 
 ### 1. Exactly-Once Processing (Idempotency)
-To handle network timeouts and retries, Nexus Gateway implements a custom idempotency layer. If a merchant retries a request with the same X-Idempotency-Key, the system returns the existing record instead of creating a duplicate transaction.
+To handle network timeouts and retries, Nexus Layer implements a custom idempotency layer. If a merchant retries a request with the same X-Idempotency-Key, the system returns the existing record instead of creating a duplicate transaction.
 
 ### 2. Zero-Knowledge API Security
 Merchant API keys are never stored in plain text. We utilize a one-way SHA-256 hashing strategy. Even in the event of a database compromise, merchant credentials remain secure.
@@ -39,7 +39,7 @@ Merchant API keys are never stored in plain text. We utilize a one-way SHA-256 h
 Webhooks are fired using FastAPI BackgroundTasks. This ensures that the Payment API remains highly responsive, as it does not wait for the merchant's server to respond before finishing the transaction.
 
 ### 4. Cryptographic Webhook Signing
-Every webhook payload includes an X-Nexus-Signature header. This allows merchants to verify that the notification was genuinely sent by Nexus Gateway, preventing "man-in-the-middle" or spoofing attacks.
+Every webhook payload includes an X-Nexus-Signature header. This allows merchants to verify that the notification was genuinely sent by Nexus Layer, preventing "man-in-the-middle" or spoofing attacks.
 
 ---
 
@@ -52,8 +52,8 @@ Every webhook payload includes an X-Nexus-Signature header. This allows merchant
 ### Setup
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/your-username/nexus-gateway.git](https://github.com/your-username/nexus-gateway.git)
-   cd nexus-gateway
+   git clone https://github.com/your-username/nexus-layer.git
+   cd nexus-layer
    
 ```bash
 # 1. Environment Setup

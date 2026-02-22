@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Zap, X, Check, ArrowRight } from 'lucide-react'
+import { X, Check, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import clsx from 'clsx'
 import api from '../lib/api'
+import { toTitleCase } from '../lib/format'
 
 // High-performance transaction simulator with live trace log
 
@@ -157,8 +158,8 @@ export default function CheckoutModal({ onClose, onComplete, onNavigateLegal }: 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-100">
                     <div className="flex items-center gap-2.5">
-                        <div className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg border border-indigo-200">
-                            <Zap size={16} fill="currentColor" />
+                        <div className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg border border-indigo-200 font-bold" style={{ minWidth: '28px', minHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>
+                            NL
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-black text-slate-900 leading-none">NEXUS LAYER</span>
@@ -303,8 +304,7 @@ export default function CheckoutModal({ onClose, onComplete, onNavigateLegal }: 
                                     disabled={submitting || !agreedToTerms}
                                     className="w-full bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-2xl relative overflow-hidden group transition-all h-[56px] disabled:opacity-30 disabled:pointer-events-none"
                                 >
-                                    <div className="absolute inset-0 flex items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-300 font-bold text-sm tracking-tight text-indigo-100">
-                                        <Zap size={16} fill="currentColor" />
+                                    <div className="absolute inset-0 flex items-center justify-center gap-2 group-hover:scale-105 transition-transform duration-300 font-bold text-sm tracking-tight text-indigo-100 uppercase">
                                         SIMULATE PAYMENT
                                     </div>
                                 </button>
@@ -412,9 +412,9 @@ export default function CheckoutModal({ onClose, onComplete, onNavigateLegal }: 
                                         <div key={row.label} className="flex items-center justify-between text-[11px]">
                                             <span className="font-black text-slate-400 uppercase tracking-widest">{row.label}</span>
                                             {row.badge ? (
-                                                <span className="inline-flex items-center gap-1.5 font-bold text-slate-700 capitalize">
+                                                <span className="inline-flex items-center gap-1.5 font-semibold tracking-tight text-slate-900">
                                                     <span className={clsx('w-2 h-2 rounded-full', GATEWAY_COLORS[row.value || ''] || 'bg-slate-400')} />
-                                                    {row.value}
+                                                    {toTitleCase(row.value)}
                                                 </span>
                                             ) : (
                                                 <span className={clsx('font-bold text-slate-700', row.mono && 'font-mono text-indigo-600')}>{row.value}</span>

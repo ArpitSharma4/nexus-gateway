@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LogOut, RefreshCw, Zap, CreditCard, TrendingUp, CheckCircle2, XCircle, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight } from 'lucide-react'
+import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../lib/api'
+import { toTitleCase } from '../lib/format'
 import CheckoutModal from '../components/CheckoutModal'
 import NexusBackground from '../components/NexusBackground'
 import SettingsPage from './SettingsPage'
@@ -60,9 +61,9 @@ function StatusBadge({ status }: { status: string }) {
 function GatewayBadge({ gateway }: { gateway: string | null }) {
     if (!gateway) return <span className="text-xs text-slate-300">—</span>
     return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-tight text-slate-900">
             <span className={clsx('w-2 h-2 rounded-full', GATEWAY_COLORS[gateway] || 'bg-slate-400')} />
-            <span className="capitalize">{gateway}</span>
+            {toTitleCase(gateway)}
         </span>
     )
 }
@@ -150,8 +151,8 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                 <header className="bg-white border-b border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            <div className="bg-indigo-600 text-white p-1.5 rounded-lg" style={{ minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Zap size={18} />
+                            <div className="bg-indigo-600 text-white p-1.5 rounded-lg font-bold" style={{ minWidth: '30px', minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                N
                             </div>
                             <span className="font-bold text-slate-900">Nexus Layer</span>
                             <span className="hidden sm:inline text-slate-300 mx-1">|</span>
@@ -307,9 +308,9 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                                                         return (
                                                             <div key={gw} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                                                                 <div className="flex items-center justify-between sm:w-28">
-                                                                    <span className="text-xs font-medium capitalize text-slate-700 flex items-center gap-1.5">
+                                                                    <span className="text-xs font-semibold tracking-tight text-slate-900 flex items-center gap-1.5">
                                                                         <span className={clsx('w-2.5 h-2.5 rounded-full', GATEWAY_COLORS[gw] || 'bg-slate-400')} />
-                                                                        {gw}
+                                                                        {toTitleCase(gw)}
                                                                     </span>
                                                                     <span className="sm:hidden text-[10px] text-slate-400 font-mono">{fmt(vol, 'INR')}</span>
                                                                 </div>

@@ -62,7 +62,7 @@ class RazorpayAdapter(BaseGateway):
                 "amount": amount,
                 "currency": currency.upper(),
                 "receipt": idempotency_key[:40],
-                "notes": {"source": "nexus-gateway"},
+                "notes": {"source": "nexus-layer"},
             })
 
             return GatewayResult(

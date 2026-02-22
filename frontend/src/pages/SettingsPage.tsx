@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Shield, ToggleLeft, ToggleRight, Plus, Trash2, Save, Key, AlertCircle, CheckCircle2, Zap } from 'lucide-react'
+import { ToggleLeft, ToggleRight, Plus, Save, Key, AlertCircle, CheckCircle2 } from 'lucide-react'
 import clsx from 'clsx'
 import api from '../lib/api'
 import type { Session } from '../App'
+import { AnimatePresence, LayoutGroup } from 'framer-motion'
+import CreateRule from '../components/CreateRule'
+import RuleCard from '../components/RuleCard'
 
 import { useMerchant, type GatewayConfig } from '../contexts/MerchantContext'
 
@@ -13,10 +16,12 @@ type GatewayHealth = {
     message: string
 }
 
+import { StripeLogo, RazorpayLogo, SimulatorLogo } from '../components/GatewayLogos'
+
 const GATEWAYS = [
-    { name: 'stripe', label: 'Stripe', color: 'from-violet-500 to-indigo-600', desc: 'International payments — USD, EUR, GBP' },
-    { name: 'razorpay', label: 'Razorpay', color: 'from-blue-500 to-cyan-500', desc: 'Optimized for INR — domestic India' },
-    { name: 'simulator', label: 'Simulator', color: 'from-emerald-500 to-teal-500', desc: 'Built-in test gateway — no API key needed' },
+    { name: 'stripe', label: 'Stripe', color: 'from-[#635BFF] to-[#00D4FF]', desc: 'International payments — USD, EUR, GBP', Logo: StripeLogo },
+    { name: 'razorpay', label: 'Razorpay', color: 'from-[#3395FF] to-[#012652]', desc: 'Optimized for INR — domestic India', Logo: RazorpayLogo },
+    { name: 'simulator', label: 'Simulator', color: 'from-emerald-500 to-teal-500', desc: 'Built-in test gateway — no API key needed', Logo: SimulatorLogo },
 ]
 
 const RULE_TYPES = [
@@ -40,7 +45,6 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
     const [razorpayKeys, setRazorpayKeys] = useState({ id: '', secret: '' })
     const [saving, setSaving] = useState<string | null>(null)
-    const [newRule, setNewRule] = useState({ rule_type: 'currency', gateway_name: 'razorpay', conditions: '{"currency":"INR"}', priority: 0 })
     const [showAddRule, setShowAddRule] = useState(false)
 
     useEffect(() => {
@@ -110,9 +114,9 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
         setSaving(null)
     }
 
-    async function addRule() {
+    async function addRule(rule: any) {
         try {
-            await api.post('/gateways/rules', newRule)
+            await api.post('/gateways/rules', rule)
             setShowAddRule(false)
             await refreshAll()
         } catch { /* ignore */ }
@@ -159,7 +163,6 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
             {/* Gateway Toggle Section */}
             <div>
                 <div className="flex items-center gap-2 mb-4">
-                    <Shield size={18} className="text-indigo-500" />
                     <h2 className="text-base font-semibold text-slate-900">Gateway Configuration</h2>
                 </div>
                 <p className="text-xs text-slate-500 mb-5">Enable or disable payment gateways and configure API keys.</p>
@@ -177,13 +180,13 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
 
                                 <div className="p-5 space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className={clsx('w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center text-white text-xs font-bold', gw.color)}>
-                                                {gw.label[0]}
+                                        <div className="flex items-center gap-3">
+                                            <div className={clsx('w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-lg shadow-slate-200/50 ring-1 ring-slate-100')}>
+                                                <gw.Logo className="w-full h-full" />
                                             </div>
                                             <div>
-                                                <div className="font-semibold text-sm text-slate-900">{gw.label}</div>
-                                                <div className="text-[10px] text-slate-400">{gw.desc}</div>
+                                                <div className="font-bold text-sm tracking-tight text-slate-900">{gw.label}</div>
+                                                <div className="text-[10px] text-slate-400 font-medium">{gw.desc}</div>
                                             </div>
                                         </div>
                                         <button
@@ -280,7 +283,6 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <Zap size={18} className="text-indigo-500" />
                         <h2 className="text-base font-semibold text-slate-900">Routing Rules</h2>
                     </div>
                     <button
@@ -293,56 +295,16 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
                 <p className="text-xs text-slate-500 mb-5">Define rules to automatically route payments to the best gateway.</p>
 
                 {/* Add Rule Form */}
-                {showAddRule && (
-                    <div className="bg-indigo-50/50 border border-indigo-200 rounded-xl p-5 mb-4 space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-semibold">Rule Type</label>
-                                <select
-                                    value={newRule.rule_type}
-                                    onChange={e => setNewRule(p => ({ ...p, rule_type: e.target.value }))}
-                                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
-                                >
-                                    {RULE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-semibold">Gateway</label>
-                                <select
-                                    value={newRule.gateway_name}
-                                    onChange={e => setNewRule(p => ({ ...p, gateway_name: e.target.value }))}
-                                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
-                                >
-                                    {GATEWAYS.map(g => <option key={g.name} value={g.name}>{g.label}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-semibold">Conditions (JSON)</label>
-                                <input
-                                    value={newRule.conditions}
-                                    onChange={e => setNewRule(p => ({ ...p, conditions: e.target.value }))}
-                                    placeholder='{"currency":"INR"}'
-                                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg font-mono focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-semibold">Priority</label>
-                                <input
-                                    type="number"
-                                    value={newRule.priority}
-                                    onChange={e => setNewRule(p => ({ ...p, priority: parseInt(e.target.value) || 0 }))}
-                                    className="w-full text-xs px-3 py-2.5 sm:py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 pt-2">
-                            <button onClick={() => setShowAddRule(false)} className="text-sm font-medium text-slate-500 hover:text-slate-800 px-4 py-2 transition min-h-[44px]">Cancel</button>
-                            <button onClick={addRule} className="text-sm font-bold bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 transition min-h-[44px] shadow-lg shadow-indigo-100">
-                                Create Rule
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <AnimatePresence>
+                    {showAddRule && (
+                        <CreateRule
+                            gateways={GATEWAYS}
+                            ruleTypes={RULE_TYPES}
+                            onCreate={addRule}
+                            onCancel={() => setShowAddRule(false)}
+                        />
+                    )}
+                </AnimatePresence>
 
                 {/* Rules List */}
                 {rules.length === 0 ? (
@@ -352,33 +314,20 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
                         <p className="text-xs text-slate-300 mt-1">Payments will use the default priority ordering</p>
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {rules.map((rule, idx) => (
-                            <div key={rule.id} className="bg-white border border-slate-200 rounded-xl px-5 py-3 flex items-center justify-between hover:shadow-md transition-shadow">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-xs font-bold text-slate-300 w-5">#{idx + 1}</span>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={clsx('px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', {
-                                                'bg-violet-100 text-violet-700': rule.rule_type === 'priority',
-                                                'bg-blue-100 text-blue-700': rule.rule_type === 'currency',
-                                                'bg-amber-100 text-amber-700': rule.rule_type === 'amount_threshold',
-                                            })}>{rule.rule_type.replace('_', ' ')}</span>
-                                            <span className="text-xs text-slate-600">→ <strong>{rule.gateway_name}</strong></span>
-                                        </div>
-                                        <div className="text-[11px] text-slate-400 mt-0.5">
-                                            {parseConditions(rule.conditions)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => deleteRule(rule.id)}
-                                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition -mr-2"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        ))}
+                    <div className="space-y-3">
+                        <LayoutGroup>
+                            <AnimatePresence initial={false}>
+                                {rules.map((rule, idx) => (
+                                    <RuleCard
+                                        key={rule.id}
+                                        rule={{ ...rule, conditions: rule.conditions || '' }}
+                                        index={idx}
+                                        onDelete={deleteRule}
+                                        parseConditions={parseConditions}
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </LayoutGroup>
                     </div>
                 )}
             </div>

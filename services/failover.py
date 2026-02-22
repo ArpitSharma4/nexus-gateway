@@ -77,7 +77,7 @@ async def execute_with_failover(
     result.add_trace("engine", f"Evaluating {len(gateways)} gateway(s): {[g.name for g in gateways]}")
 
     for i, gateway in enumerate(gateways):
-        result.add_trace("engine", f"Routing to {gateway.name.capitalize()} ({_gateway_reason(gateway, currency)}).")
+        result.add_trace("engine", f"Routing to {gateway.name.capitalize()}...")
 
         try:
             gw_result = await gateway.charge(

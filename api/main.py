@@ -66,4 +66,4 @@ app.include_router(gateways.router, prefix="/api")
 @app.get("/api/health", tags=["System"], summary="Health check")
 def health_check():
     """Returns a simple liveness signal — useful for uptime monitors."""
-    return {"status": "ok", "service": "nexus-gateway", "version": "2.0.0"}
+    return {"status": "ok", "service": "nexus-layer", "version": "2.0.0"}

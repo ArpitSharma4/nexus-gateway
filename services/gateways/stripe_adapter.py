@@ -51,7 +51,7 @@ class StripeAdapter(BaseGateway):
                 currency=currency.lower(),
                 payment_method_types=["card"],
                 idempotency_key=idempotency_key,
-                metadata={"source": "nexus-gateway"},
+                metadata={"source": "nexus-layer"},
                 api_key=self._api_key
             )
             
