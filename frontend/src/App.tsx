@@ -13,8 +13,9 @@ export type View = 'app' | 'legal'
 
 export type Session = {
     apiKey: string
-    merchantId: string
-    merchantName: string
+    merchantId?: string
+    merchantName?: string
+    isAdmin?: boolean
 }
 
 export default function App() {
@@ -31,12 +32,22 @@ export default function App() {
             return
         }
 
-        const fetchData = api.post('/merchants/login', { api_key: saved })
-            .then(({ data }) => {
-                setApiKey(saved)
-                setSession({ apiKey: saved, merchantId: data.id, merchantName: data.name })
-            })
-            .catch(() => clearApiKey())
+        // Detect if it's an admin key (simple heuristic or just try both)
+        const isMasterKey = saved.startsWith('nexus_admin_')
+
+        const fetchData = isMasterKey
+            ? api.get('/admin/metrics', { headers: { 'X-Admin-Key': saved } })
+                .then(() => {
+                    setApiKey(saved)
+                    setSession({ apiKey: saved, isAdmin: true })
+                })
+                .catch(() => clearApiKey())
+            : api.post('/merchants/login', { api_key: saved })
+                .then(({ data }) => {
+                    setApiKey(saved)
+                    setSession({ apiKey: saved, merchantId: data.id, merchantName: data.name })
+                })
+                .catch(() => clearApiKey())
 
         Promise.all([fetchData, minDelay]).finally(() => setLoading(false))
     }, [])

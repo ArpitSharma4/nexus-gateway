@@ -108,6 +108,12 @@ async def process_payment(
 
     # ── 4. Select gateways via routing engine ─────────────────────────────────
     available = get_available_gateways(db=db, merchant_id=intent.merchant_id)
+    
+    # Chaos Controls: Filter out gateways with simulated outages
+    from models.gateway import GatewayHealth
+    outages = {h.gateway_name for h in db.query(GatewayHealth).filter(GatewayHealth.is_simulated_outage == True).all()}
+    available = [g for g in available if g.name not in outages]
+
     ordered_gateways = select_gateways(
         db=db,
         merchant_id=intent.merchant_id,
@@ -138,6 +144,11 @@ async def process_payment(
     # ── 7. Store routing trace ────────────────────────────────────────────────
     intent.gateway_used = failover_result.gateway_used
     intent.trace_log = failover_result.trace_json
+    
+    # Oversight Elite: Log failover events if backup was used
+    if len(failover_result.trace) > 1 and "backup" in failover_result.trace_json.lower():
+        from services.events import log_system_event, EVENT_FAILOVER_RESCUE
+        log_system_event(db, EVENT_FAILOVER_RESCUE, f"Failover Triggered: {ordered_gateways[0].name.capitalize()} -> {failover_result.gateway_used.capitalize()}")
 
     # ── 8. Persist ────────────────────────────────────────────────────────────
     db.commit()

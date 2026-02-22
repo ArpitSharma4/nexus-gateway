@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight } from 'lucide-react'
+import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, X, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight, ChevronLeft, ShieldAlert } from 'lucide-react'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../lib/api'
@@ -8,10 +8,10 @@ import CheckoutModal from '../components/CheckoutModal'
 import NexusBackground from '../components/NexusBackground'
 import SettingsPage from './SettingsPage'
 import IntegrationPage from './IntegrationPage'
+import AdminDashboard from '../components/AdminDashboard'
 import { PaymentSkeleton } from '../components/Skeleton'
 import type { Session } from '../App'
 import { useMerchant } from '../contexts/MerchantContext'
-
 type PaymentIntent = {
     payment_intent_id: string
     amount: number
@@ -21,12 +21,13 @@ type PaymentIntent = {
     gateway_used: string | null
 }
 
-type Tab = 'payments' | 'settings' | 'integration'
+type Tab = 'payments' | 'settings' | 'integration' | 'oversight'
 
-const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'payments', label: 'Payments', icon: <CreditCard size={15} /> },
-    { id: 'settings', label: 'Settings', icon: <Settings size={15} /> },
-    { id: 'integration', label: 'Integration', icon: <Code2 size={15} /> },
+const TABS: { id: Tab; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
+    { id: 'payments', label: 'Payments', icon: <CreditCard size={14} /> },
+    { id: 'settings', label: 'Settings', icon: <Settings size={14} /> },
+    { id: 'integration', label: 'Integration', icon: <Code2 size={14} /> },
+    { id: 'oversight', label: 'Oversight', icon: <ShieldAlert size={14} />, adminOnly: true },
 ]
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -78,30 +79,74 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
     const { configs: _configs, rules: _rules, loading: _configsLoading } = useMerchant()
     const [intents, setIntents] = useState<PaymentIntent[]>([])
     const [loading, setLoading] = useState(true)
+    const [totalCount, setTotalCount] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [filterConfig, setFilterConfig] = useState<{ sort: string; status: string }>({ sort: 'none', status: 'all' })
+    const resultsPerPage = 10
+
     const [showCheckout, setShowCheckout] = useState(false)
-    const [activeTab, setActiveTab] = useState<Tab>('payments')
+    const [activeTab, setActiveTab] = useState<Tab>(session.isAdmin ? 'oversight' : 'payments')
     const [showGuide, setShowGuide] = useState(() => {
         return localStorage.getItem('nexus_guide_dismissed') !== 'true'
     })
+    const [announcement, setAnnouncement] = useState<{ content: string; severity: string } | null>(null)
+    const [isDismissed, setIsDismissed] = useState(false)
 
     const dismissGuide = () => {
         localStorage.setItem('nexus_guide_dismissed', 'true')
         setShowGuide(false)
     }
 
+    const handleDismissBanner = () => {
+        if (announcement) {
+            localStorage.setItem('nexus_announcement_dismissed', announcement.content)
+            setIsDismissed(true)
+        }
+    }
+
+    useEffect(() => {
+        if (announcement) {
+            const dismissed = localStorage.getItem('nexus_announcement_dismissed')
+            setIsDismissed(dismissed === announcement.content)
+        }
+    }, [announcement])
+
     const fetchIntents = useCallback(async () => {
         setLoading(true)
         try {
-            const { data } = await api.get('/payments/')
-            setIntents(data)
+            const { data } = await api.get('/payments/', {
+                params: {
+                    page: currentPage,
+                    limit: resultsPerPage,
+                    sort: filterConfig.sort,
+                    status: filterConfig.status
+                }
+            })
+            setIntents(data.items)
+            setTotalCount(data.total)
         } catch {
             // silently handle — user will see empty table
         } finally {
             setLoading(false)
         }
+    }, [currentPage, filterConfig])
+
+    const fetchAnnouncement = useCallback(async () => {
+        try {
+            const { data } = await api.get('/merchants/announcement')
+            setAnnouncement(data)
+        } catch {
+            // silently handle
+        }
     }, [])
 
-    useEffect(() => { fetchIntents() }, [fetchIntents])
+    useEffect(() => {
+        fetchIntents()
+    }, [fetchIntents])
+
+    useEffect(() => {
+        fetchAnnouncement()
+    }, [fetchAnnouncement])
 
     const handleCheckoutComplete = (result: any) => {
         // Optimistic Update: Add the new transaction immediately to the list
@@ -156,11 +201,23 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                             </div>
                             <span className="font-bold text-slate-900">Nexus Layer</span>
                             <span className="hidden sm:inline text-slate-300 mx-1">|</span>
-                            <span className="hidden sm:inline text-sm text-slate-500">{session.merchantName}</span>
+                            <span className={clsx("hidden sm:inline text-sm font-medium", session.isAdmin ? "text-amber-600" : "text-slate-500")}>
+                                {session.isAdmin ? "Master Controller" : session.merchantName}
+                            </span>
+                            {session.isAdmin && (
+                                <span className="px-2 py-0.5 bg-slate-900 text-amber-400 text-[10px] font-bold tracking-tight uppercase rounded border border-amber-400/30">
+                                    ADMIN LEVEL
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="hidden sm:flex items-center gap-1.5 bg-slate-100 text-slate-500 text-xs font-mono px-3 py-1.5 rounded-lg">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                            <div className={clsx(
+                                "hidden sm:flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg border transition-all duration-500",
+                                session.isAdmin
+                                    ? "bg-amber-400 text-slate-900 border-amber-500 shadow-[0_0_20px_rgba(251,191,36,0.3)] animate-pulse"
+                                    : "bg-slate-100 text-slate-500 border-slate-200"
+                            )}>
+                                <span className={clsx("w-1.5 h-1.5 rounded-full", session.isAdmin ? "bg-slate-900" : "bg-emerald-500 animate-pulse")} />
                                 {session.apiKey.slice(0, 18)}…
                             </div>
                             <button
@@ -176,13 +233,15 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                     {/* Tab Navigation */}
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <nav className="flex gap-1 -mb-px overflow-x-auto no-scrollbar whitespace-nowrap">
-                            {TABS.map(tab => (
+                            {TABS.filter(t => !t.adminOnly || session.isAdmin).map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={clsx(
                                         'relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition shrink-0 min-h-[44px]',
-                                        activeTab === tab.id ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-800'
+                                        activeTab === tab.id
+                                            ? (session.isAdmin ? 'text-amber-600' : 'text-indigo-600')
+                                            : 'text-slate-500 hover:text-slate-800'
                                     )}
                                 >
                                     {tab.icon}
@@ -190,7 +249,7 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                                     {activeTab === tab.id && (
                                         <motion.div
                                             layoutId="activeTab"
-                                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
+                                            className={clsx("absolute bottom-0 left-0 right-0 h-0.5", session.isAdmin ? "bg-amber-500" : "bg-indigo-600")}
                                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                         />
                                     )}
@@ -210,6 +269,56 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                             className="space-y-6"
                         >
+                            {/* Global Platform Announcement Banner */}
+                            <AnimatePresence>
+                                {announcement && announcement.content && !isDismissed && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="mb-6 overflow-hidden"
+                                    >
+                                        <div className={clsx(
+                                            "flex items-center gap-3 p-4 rounded-2xl border backdrop-blur-md",
+                                            announcement.severity === 'critical'
+                                                ? "bg-red-50/80 border-red-200 text-red-800"
+                                                : "bg-amber-50/80 border-amber-200 text-amber-800"
+                                        )}>
+                                            <div className={clsx(
+                                                "p-1.5 rounded-lg",
+                                                announcement.severity === 'critical' ? "bg-red-100" : "bg-amber-100"
+                                            )}>
+                                                <Info size={16} />
+                                            </div>
+                                            <div className="flex-1 text-sm font-bold tracking-tight">
+                                                <span className="uppercase text-[10px] opacity-60 mr-2">Platform Update:</span>
+                                                {announcement.content}
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                {session.isAdmin && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            await api.post('/admin/broadcast', { content: '', severity: '' }, { headers: { 'X-Admin-Key': session.apiKey } })
+                                                            setAnnouncement(null)
+                                                        }}
+                                                        className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 bg-slate-200/50 px-2 py-1 rounded-md"
+                                                    >
+                                                        Clear
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={handleDismissBanner}
+                                                    className="p-1 rounded-full hover:bg-slate-200/50 text-slate-400 hover:text-slate-600 transition-colors"
+                                                    title="Dismiss"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
                             {/* ── Payments Tab ────────────────────────────── */}
                             {activeTab === 'payments' && (
                                 <>
@@ -334,77 +443,143 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                                     )}
 
                                     {/* Table card */}
-                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                        <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+                                        <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
                                             <div>
                                                 <h2 className="text-sm sm:text-base font-semibold text-slate-900">Payment Intents</h2>
                                                 <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">All transactions for your account</p>
                                             </div>
-                                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {/* Amount Sort */}
+                                                <select
+                                                    value={filterConfig.sort}
+                                                    onChange={(e) => {
+                                                        setFilterConfig(prev => ({ ...prev, sort: e.target.value }))
+                                                        setCurrentPage(1)
+                                                    }}
+                                                    className="text-[11px] font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                >
+                                                    <option value="none">Sort: Newest</option>
+                                                    <option value="highest">Highest Amount</option>
+                                                    <option value="lowest">Lowest Amount</option>
+                                                </select>
+
+                                                {/* Status Filter */}
+                                                <select
+                                                    value={filterConfig.status}
+                                                    onChange={(e) => {
+                                                        setFilterConfig(prev => ({ ...prev, status: e.target.value }))
+                                                        setCurrentPage(1)
+                                                    }}
+                                                    className="text-[11px] font-bold text-slate-600 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                >
+                                                    <option value="all">All Statuses</option>
+                                                    <option value="succeeded">Succeeded</option>
+                                                    <option value="failed">Failed</option>
+                                                </select>
+
+                                                <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block" />
+
                                                 <button
                                                     onClick={fetchIntents}
-                                                    className="p-2.5 border border-slate-100 sm:border-none text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition flex-1 sm:flex-none justify-center min-h-[44px] min-w-[44px] flex items-center"
+                                                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
                                                     title="Refresh"
                                                 >
-                                                    <RefreshCw size={16} className={clsx(loading && 'animate-spin')} />
+                                                    <RefreshCw size={14} className={clsx(loading && 'animate-spin')} />
                                                 </button>
                                                 <button
                                                     onClick={() => setShowCheckout(true)}
-                                                    className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold min-h-[44px] px-5 rounded-xl transition flex-[4] sm:flex-none shadow-lg shadow-indigo-100"
+                                                    className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg transition shadow-sm"
                                                 >
-                                                    <CreditCard size={15} />
-                                                    New Payment
+                                                    <CreditCard size={12} />
+                                                    Charge
                                                 </button>
                                             </div>
                                         </div>
 
                                         {loading ? (
-                                            <PaymentSkeleton />
+                                            <div className="p-4 space-y-3">
+                                                {[...Array(5)].map((_, i) => <PaymentSkeleton key={i} />)}
+                                            </div>
                                         ) : intents.length === 0 ? (
-                                            <div className="text-center py-20 px-6">
-                                                <CreditCard size={36} className="text-slate-200 mx-auto mb-3" />
-                                                <p className="text-slate-500 text-sm font-medium">No payments yet</p>
-                                                <p className="text-slate-400 text-xs mt-1">Click "New Payment" to simulate a checkout</p>
+                                            <div className="text-center py-20 px-6 bg-slate-50/20">
+                                                <div className="bg-slate-100 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                    <CreditCard size={20} className="text-slate-400" />
+                                                </div>
+                                                <p className="text-slate-900 text-sm font-bold">
+                                                    {filterConfig.status === 'all' ? "No payments yet" : `No ${filterConfig.status} payments`}
+                                                </p>
+                                                <p className="text-slate-500 text-[11px] mt-1 font-medium">
+                                                    {filterConfig.status === 'all'
+                                                        ? "Your transaction history will appear here once you start processing."
+                                                        : "Try adjusting your filters to see more results."}
+                                                </p>
                                             </div>
                                         ) : (
-                                            <div className="overflow-x-auto custom-scrollbar">
-                                                <table className="w-full text-sm min-w-[640px] sm:min-w-0">
-                                                    <thead>
-                                                        <tr className="border-b border-slate-100 bg-slate-50/60">
-                                                            <th className="text-left text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest px-4 sm:px-6 py-4">ID</th>
-                                                            <th className="text-left text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest px-4 sm:px-6 py-4">Amount</th>
-                                                            <th className="text-left text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest px-4 sm:px-6 py-4 hidden sm:table-cell">Currency</th>
-                                                            <th className="text-left text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest px-4 sm:px-6 py-4">Gateway</th>
-                                                            <th className="text-left text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest px-4 sm:px-6 py-4">Status</th>
-                                                            <th className="text-left text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest px-4 sm:px-6 py-4 hidden md:table-cell">Idem. Key</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-100">
-                                                        {intents.map(i => (
-                                                            <tr key={i.payment_intent_id} className="hover:bg-slate-50 transition-colors">
-                                                                <td className="px-4 sm:px-6 py-4 font-mono text-[11px] text-slate-600">
-                                                                    {i.payment_intent_id.slice(0, 8)}…
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4 font-bold text-slate-900 tabular-nums">
-                                                                    {fmt(i.amount, i.currency)}
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-slate-500 uppercase font-medium hidden sm:table-cell">
-                                                                    {i.currency}
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4">
-                                                                    <GatewayBadge gateway={i.gateway_used} />
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4">
-                                                                    <StatusBadge status={i.status} />
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4 font-mono text-[10px] text-slate-400 truncate max-w-[120px] hidden md:table-cell">
-                                                                    {i.idempotency_key}
-                                                                </td>
+                                            <>
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-left border-collapse">
+                                                        <thead>
+                                                            <tr className="bg-slate-50/50 border-b border-slate-100">
+                                                                <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Intent ID</th>
+                                                                <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Amount</th>
+                                                                <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Gateway</th>
+                                                                <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-50">
+                                                            {intents.map((i) => (
+                                                                <tr key={i.payment_intent_id} className="hover:bg-slate-50/50 transition-colors group">
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="font-mono text-[11px] font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                                                                {i.payment_intent_id.slice(0, 12)}...
+                                                                            </span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <span className="text-xs font-bold text-slate-900 tabular-nums">
+                                                                            {fmt(i.amount, i.currency)}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <GatewayBadge gateway={i.gateway_used} />
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <StatusBadge status={i.status} />
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                {/* Pagination Controls */}
+                                                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
+                                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                                        Page <span className="text-slate-900">{currentPage}</span> of <span className="text-slate-900">{Math.ceil(totalCount / resultsPerPage) || 1}</span>
+                                                        <span className="ml-3 opacity-50 font-medium">({totalCount} Total)</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            disabled={currentPage === 1 || loading}
+                                                            onClick={() => setCurrentPage(p => p - 1)}
+                                                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-sm"
+                                                            title="Previous Page"
+                                                        >
+                                                            <ChevronLeft size={16} />
+                                                        </button>
+                                                        <button
+                                                            disabled={currentPage >= Math.ceil(totalCount / resultsPerPage) || loading}
+                                                            onClick={() => setCurrentPage(p => p + 1)}
+                                                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-sm"
+                                                            title="Next Page"
+                                                        >
+                                                            <ChevronRight size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                 </>
@@ -415,6 +590,9 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
 
                             {/* ── Integration Tab ─────────────────────────── */}
                             {activeTab === 'integration' && <IntegrationPage apiKey={session.apiKey} />}
+
+                            {/* ── Oversight Tab (Admin Only) ───────────────── */}
+                            {activeTab === 'oversight' && session.isAdmin && <AdminDashboard apiKey={session.apiKey} />}
                         </motion.div>
                     </AnimatePresence>
                 </main>

@@ -35,6 +35,7 @@ class GatewayHealth(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     gateway_name = Column(String(50), nullable=False, unique=True, index=True)
     status = Column(String(20), nullable=False, default="healthy")  # healthy, degraded, down
+    is_simulated_outage = Column(Boolean, default=False)             # Chaos Control trigger
     latency_ms = Column(Float, nullable=False, default=0.0)
     message = Column(Text, nullable=True)
     last_checked_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

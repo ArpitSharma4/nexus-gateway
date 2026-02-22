@@ -144,14 +144,33 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
 
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault()
+        const cleanKey = apiKeyInput.trim()
+        if (!cleanKey) {
+            setLoginError('Please enter an API key.')
+            return
+        }
+
         setLoginLoading(true)
         setLoginError('')
         try {
-            const { data } = await api.post('/merchants/login', { api_key: apiKeyInput })
-            setApiKey(apiKeyInput)
-            onLogin({ apiKey: apiKeyInput, merchantName: data.name, merchantId: data.id })
+            if (cleanKey.startsWith('nexus_admin_')) {
+                // Admin Verification
+                await api.get('/admin/metrics', { headers: { 'X-Admin-Key': cleanKey } })
+                setApiKey(cleanKey)
+                onLogin({ apiKey: cleanKey, isAdmin: true })
+            } else {
+                // Standard Merchant Login
+                const { data } = await api.post('/merchants/login', { api_key: cleanKey })
+                setApiKey(cleanKey)
+                onLogin({ apiKey: cleanKey, merchantName: data.name, merchantId: data.id })
+            }
         } catch (err: any) {
-            setLoginError(err.response?.data?.detail || 'Invalid API key.')
+            const detail = err.response?.data?.detail
+            if (Array.isArray(detail)) {
+                setLoginError(detail.map((d: any) => d.msg).join('. '))
+            } else {
+                setLoginError(detail || 'Invalid Credentials. Please check your API key.')
+            }
         } finally {
             setLoginLoading(false)
         }

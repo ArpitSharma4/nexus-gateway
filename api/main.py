@@ -12,7 +12,7 @@ project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from api.routes import merchants, payments, gateways
+from api.routes import merchants, payments, gateways, admin
 
 
 # ── Lifespan ───────────────────────────────────────────────────────────────────
@@ -60,6 +60,7 @@ app.add_middleware(
 app.include_router(merchants.router, prefix="/api")
 app.include_router(payments.router, prefix="/api")
 app.include_router(gateways.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
 # ── Core Endpoints ─────────────────────────────────────────────────────────────
 

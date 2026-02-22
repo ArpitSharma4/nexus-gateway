@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from database.session import get_db
 from models.merchant import Merchant
 from services.merchant_service import create_merchant
+from services.events import log_system_event
+from models.announcement import PlatformAnnouncement
 from utils.security import hash_api_key
 
 router = APIRouter(prefix="/merchants", tags=["Merchants"])
@@ -89,7 +91,9 @@ def signup(
             detail="A merchant with this business name already exists. Please use the Login tab with your API key.",
         )
 
+    from services.events import log_system_event, EVENT_MERCHANT_JOIN
     result = create_merchant(db=db, business_name=body.business_name)
+    log_system_event(db, EVENT_MERCHANT_JOIN, f"New Merchant Onboarded: {body.business_name}")
     return MerchantSignupResponse(**result)
 
 
@@ -113,3 +117,9 @@ def login(
         )
 
     return MerchantLoginResponse(merchant_id=merchant.id, name=merchant.name)
+
+
+@router.get("/announcement", summary="Get active platform announcement")
+def get_announcement(db: Session = Depends(get_db)):
+    """Retrieves the currently pinned platform-wide announcement for merchants."""
+    return db.query(PlatformAnnouncement).filter(PlatformAnnouncement.is_active == True).first()

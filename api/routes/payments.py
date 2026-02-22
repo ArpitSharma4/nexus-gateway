@@ -81,31 +81,54 @@ class ProcessPaymentResponse(BaseModel):
 @router.get(
     "/",
     summary="List Payment Intents",
-    description="Returns all payment intents belonging to the authenticated merchant, newest first.",
+    description="Returns filtered and paginated payment intents belonging to the authenticated merchant.",
     tags=["Payments"],
 )
 def list_payment_intents(
+    page: int = 1,
+    limit: int = 10,
+    sort: str = "none",
+    status: str = "all",
     merchant: Merchant = Depends(get_current_merchant),
     db: Session = Depends(get_db),
 ):
     from models.payment import PaymentIntent
-    intents = (
-        db.query(PaymentIntent)
-        .filter(PaymentIntent.merchant_id == merchant.id)
-        .order_by(PaymentIntent.id.desc())
-        .all()
-    )
-    return [
-        {
-            "payment_intent_id": i.id,
-            "amount": i.amount,
-            "currency": i.currency,
-            "status": i.status,
-            "idempotency_key": i.idempotency_key,
-            "gateway_used": i.gateway_used,
-        }
-        for i in intents
-    ]
+    query = db.query(PaymentIntent).filter(PaymentIntent.merchant_id == merchant.id)
+
+    # ── Filtering ──────────────────────────────────────────────────────────
+    if status != "all":
+        query = query.filter(PaymentIntent.status == status)
+
+    # ── Sorting ────────────────────────────────────────────────────────────
+    if sort == "highest":
+        query = query.order_by(PaymentIntent.amount.desc())
+    elif sort == "lowest":
+        query = query.order_by(PaymentIntent.amount.asc())
+    else:
+        query = query.order_by(PaymentIntent.id.desc())
+
+    # ── Total Count (for pagination) ───────────────────────────────────────
+    total_count = query.count()
+
+    # ── Pagination ─────────────────────────────────────────────────────────
+    intents = query.offset((page - 1) * limit).limit(limit).all()
+
+    return {
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "items": [
+            {
+                "payment_intent_id": i.id,
+                "amount": i.amount,
+                "currency": i.currency,
+                "status": i.status,
+                "idempotency_key": i.idempotency_key,
+                "gateway_used": i.gateway_used,
+            }
+            for i in intents
+        ]
+    }
 
 
 @router.post(

@@ -53,11 +53,17 @@ def select_gateways(
         .all()
     )
 
+    # ── Chaos Engineering: Filter out "Killed" nodes ──────────────────────────
+    from models.gateway import GatewayHealth
+    outages = {h.gateway_name for h in db.query(GatewayHealth).filter(GatewayHealth.is_simulated_outage == True).all()}
+    
+    filtered_available = {k: v for k, v in available_gateways.items() if k not in outages}
+
     ordered: List[str] = []
     used: set = set()
 
     for rule in rules:
-        if rule.gateway_name not in available_gateways:
+        if rule.gateway_name not in filtered_available:
             continue
         if rule.gateway_name in used:
             continue
@@ -71,11 +77,11 @@ def select_gateways(
             )
 
     # Append remaining gateways (simulator last as the ultimate fallback)
-    for gw_name in sorted(available_gateways.keys(), key=lambda n: (n == "simulator", n)):
+    for gw_name in sorted(filtered_available.keys(), key=lambda n: (n == "simulator", n)):
         if gw_name not in used:
             ordered.append(gw_name)
 
-    return [available_gateways[n] for n in ordered]
+    return [filtered_available[n] for n in ordered]
 
 
 def _matches(rule: RoutingRule, amount: int, currency: str) -> bool:
