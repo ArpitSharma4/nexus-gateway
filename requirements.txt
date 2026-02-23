@@ -11,3 +11,6 @@ pyjwt
 stripe
 razorpay
 cryptography
+reportlab
+pypdf
+pyzipper
