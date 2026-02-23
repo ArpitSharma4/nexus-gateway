@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, AlertCircle, Copy, Check, KeyRound, User, Shield, Radio, ChevronDown } from 'lucide-react'
+import { Zap, AlertCircle, Copy, Check, KeyRound, User, Shield, Radio } from 'lucide-react'
 import clsx from 'clsx'
 import api, { setApiKey } from '../lib/api'
 import type { Session } from '../App'
@@ -189,10 +189,10 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
                 </span>
             </div>
 
-            <div className="h-screen w-screen flex items-center justify-center p-4 lg:p-8 overflow-hidden">
+            <div className="min-h-screen w-screen flex items-center justify-center p-4 lg:p-8 overflow-y-auto custom-scrollbar">
                 {/* ── Main Card (Full White) ────────────────────────── */}
                 <div
-                    className="group w-full max-w-5xl bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col lg:grid lg:grid-cols-2 relative scale-[0.9] sm:scale-95 lg:scale-[0.85] 2xl:scale-100 transition-all duration-500 origin-center"
+                    className="group w-full max-w-5xl bg-white rounded-[32px] shadow-2xl flex flex-col lg:grid lg:grid-cols-2 relative scale-[0.9] sm:scale-95 lg:scale-[0.85] 2xl:scale-100 transition-all duration-500 origin-center mb-10"
                     style={{ border: '1px solid #f1f5f9' }}
                 >
                     {/* Vertical Divider (The "Spine") */}
@@ -291,33 +291,26 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
                                         <motion.div
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="relative flex flex-col h-full"
+                                            className="relative flex flex-col h-full pb-10 lg:pb-0"
                                         >
-                                            <div className="overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
-                                                <div className="flex items-center gap-3 text-emerald-600 mb-4">
-                                                    <div className="bg-emerald-100 p-1.5 rounded-full"><Check size={20} /></div>
-                                                    <span className="text-xl font-bold">Account created!</span>
-                                                </div>
-
-                                                <p className="text-sm text-slate-600 font-medium mb-4">
-                                                    Save your API key for <strong>{newKey.biz}</strong>. It won't be shown again.
-                                                </p>
-
-                                                <div className="bg-slate-900 text-emerald-400 font-mono text-sm rounded-2xl px-5 py-4 mb-4 break-all select-all shadow-inner border border-slate-800">
-                                                    {newKey.key}
-                                                </div>
-
-                                                <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] text-amber-800 font-medium leading-relaxed mb-6">
-                                                    ⚠️ Note: We do not store plain-text keys. If lost, you'll need to create a new business account.
-                                                </div>
-
-                                                {/* Visual indicator for more content */}
-                                                <div className="flex justify-center mb-4 md:hidden animate-bounce text-slate-300">
-                                                    <ChevronDown size={20} />
-                                                </div>
+                                            <div className="flex items-center gap-3 text-emerald-600 mb-4">
+                                                <div className="bg-emerald-100 p-1.5 rounded-full"><Check size={20} /></div>
+                                                <span className="text-xl font-bold">Account created!</span>
                                             </div>
 
-                                            <div className="flex flex-col md:flex-row gap-3 mt-auto pt-4 border-t border-slate-100 bg-white/80 backdrop-blur-md">
+                                            <p className="text-sm text-slate-600 font-medium mb-4">
+                                                Save your API key for <strong>{newKey.biz}</strong>. It won't be shown again.
+                                            </p>
+
+                                            <div className="bg-slate-900 text-emerald-400 font-mono text-[10px] sm:text-sm rounded-2xl px-4 sm:px-5 py-3 sm:py-4 mb-4 break-all select-all shadow-inner border border-slate-800 max-h-[100px] overflow-y-auto custom-scrollbar">
+                                                {newKey.key}
+                                            </div>
+
+                                            <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] text-amber-800 font-medium leading-relaxed mb-8">
+                                                ⚠️ Note: We do not store plain-text keys. If lost, you'll need to create a new business account.
+                                            </div>
+
+                                            <div className="flex flex-col md:flex-row gap-3">
                                                 <motion.button
                                                     initial={{ opacity: 0, scale: 0.95 }}
                                                     animate={{ opacity: 1, scale: 1 }}
