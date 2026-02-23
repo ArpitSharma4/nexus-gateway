@@ -39,6 +39,8 @@ class GatewayConfigResponse(BaseModel):
     gateway_name: str
     enabled: bool
     has_api_key: bool
+    last_health_status: Optional[str] = None
+    last_latency_ms: Optional[float] = None
 
 
 class RoutingRuleRequest(BaseModel):
@@ -65,10 +67,9 @@ class RoutingRuleResponse(BaseModel):
 @router.get(
     "/health",
     response_model=List[GatewayHealthResponse],
-    summary="Get gateway health status",
-    description="Returns the latest health-check results for all monitored gateways.",
+    summary="Get global gateway health status",
 )
-def get_health(db: Session = Depends(get_db)):
+def get_global_health(db: Session = Depends(get_db)):
     records = db.query(GatewayHealth).all()
     return [
         GatewayHealthResponse(
@@ -79,6 +80,59 @@ def get_health(db: Session = Depends(get_db)):
         )
         for r in records
     ]
+
+
+@router.post(
+    "/health/test/{gateway_name}",
+    response_model=GatewayHealthResponse,
+    summary="Test gateway health with merchant keys",
+)
+async def test_gateway_health(
+    gateway_name: str,
+    merchant: Merchant = Depends(get_current_merchant),
+    db: Session = Depends(get_db),
+):
+    from services.gateways import get_available_gateways
+    
+    # Load all available gateways for this specific merchant from the DB
+    available = get_available_gateways(db=db, merchant_id=merchant.id)
+    
+    if gateway_name not in available:
+        # Check if it's because keys are missing
+        config = db.query(GatewayConfig).filter(
+            GatewayConfig.merchant_id == merchant.id,
+            GatewayConfig.gateway_name == gateway_name
+        ).first()
+        
+        status_text = "awaiting keys" if not (config and config.api_key_encrypted) else "down"
+        
+        return GatewayHealthResponse(
+            gateway_name=gateway_name,
+            status=status_text,
+            latency_ms=0,
+            message="Gateway not configured or keys invalid."
+        )
+
+    adapter = available[gateway_name]
+    health = await adapter.health_check()
+    
+    # Update GatewayConfig with the latest result
+    config = db.query(GatewayConfig).filter(
+        GatewayConfig.merchant_id == merchant.id,
+        GatewayConfig.gateway_name == gateway_name
+    ).first()
+    
+    if config:
+        config.last_health_status = health.status.value
+        config.last_latency_ms = health.latency_ms
+        db.commit()
+
+    return GatewayHealthResponse(
+        gateway_name=health.gateway_name,
+        status=health.status.value,
+        latency_ms=health.latency_ms,
+        message=health.message,
+    )
 
 
 # ── Gateway Configuration ─────────────────────────────────────────────────────
@@ -106,6 +160,8 @@ def get_configs(
             gateway_name=c.gateway_name,
             enabled=c.enabled,
             has_api_key=bool(c.api_key_encrypted),
+            last_health_status=c.last_health_status,
+            last_latency_ms=c.last_latency_ms,
         )
         for c in configs
     ]
@@ -153,6 +209,8 @@ def upsert_config(
         gateway_name=config.gateway_name,
         enabled=config.enabled,
         has_api_key=bool(config.api_key_encrypted),
+        last_health_status=config.last_health_status,
+        last_latency_ms=config.last_latency_ms,
     )
 
 

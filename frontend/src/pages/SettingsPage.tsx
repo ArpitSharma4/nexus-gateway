@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ToggleLeft, ToggleRight, Plus, Save, Key, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ToggleLeft, ToggleRight, Plus, Save, Key, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react'
 import clsx from 'clsx'
 import api from '../lib/api'
 import type { Session } from '../App'
@@ -45,6 +45,7 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({})
     const [razorpayKeys, setRazorpayKeys] = useState({ id: '', secret: '' })
     const [saving, setSaving] = useState<string | null>(null)
+    const [testing, setTesting] = useState<string | null>(null)
     const [showAddRule, setShowAddRule] = useState(false)
 
     useEffect(() => {
@@ -110,8 +111,20 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
                 setApiKeys(prev => ({ ...prev, [gatewayName]: '' }))
             }
             await refreshAll()
+
+            // Auto-test health after saving key
+            await testHealth(gatewayName)
         } catch { /* ignore */ }
         setSaving(null)
+    }
+
+    async function testHealth(gatewayName: string) {
+        setTesting(gatewayName)
+        try {
+            await api.post(`/gateways/health/test/${gatewayName}`)
+            await refreshAll()
+        } catch { /* ignore */ }
+        setTesting(null)
     }
 
     async function addRule(rule: any) {
@@ -204,18 +217,49 @@ export default function SettingsPage({ session: _session, onNavigateLegal }: Pro
                                     </div>
 
                                     {/* Health status */}
-                                    {hp && (
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className={clsx('w-2 h-2 rounded-full', {
-                                                'bg-emerald-500': hp.status === 'healthy',
-                                                'bg-amber-500': hp.status === 'degraded',
-                                                'bg-red-500': hp.status === 'down',
-                                            })} />
-                                            <span className="text-slate-500 uppercase tracking-wide font-medium">{hp.status}</span>
-                                            <span className="text-slate-300">•</span>
-                                            <span className="font-mono text-slate-600">{hp.latency_ms.toFixed(0)}ms</span>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-[10px] sm:text-xs">
+                                            {!cfg?.has_api_key && gw.name !== 'simulator' ? (
+                                                <>
+                                                    <span className="w-2 h-2 rounded-full bg-slate-300" />
+                                                    <span className="text-slate-400 uppercase tracking-wide font-bold">Awaiting Keys</span>
+                                                    <span className="text-slate-200">•</span>
+                                                    <span className="font-mono text-slate-300">--ms</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className={clsx('w-2 h-2 rounded-full', {
+                                                        'bg-emerald-500': (gw.name === 'simulator' ? hp?.status === 'healthy' : cfg?.last_health_status === 'healthy'),
+                                                        'bg-amber-500': (gw.name === 'simulator' ? hp?.status === 'degraded' : cfg?.last_health_status === 'degraded'),
+                                                        'bg-red-500': (gw.name === 'simulator' ? hp?.status === 'down' : cfg?.last_health_status === 'down'),
+                                                    })} />
+                                                    <span className="text-slate-500 uppercase tracking-wide font-bold">
+                                                        {gw.name === 'simulator' ? (hp?.status || 'HEALTHY') : (cfg?.last_health_status || 'AWAITING TEST')}
+                                                    </span>
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="font-mono text-slate-600">
+                                                        {gw.name === 'simulator'
+                                                            ? (hp?.latency_ms?.toFixed(0) || '0')
+                                                            : (cfg?.last_latency_ms?.toFixed(0) || '--')}ms
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
-                                    )}
+
+                                        {isEnabled && (
+                                            <button
+                                                onClick={() => testHealth(gw.name)}
+                                                disabled={testing === gw.name || (!cfg?.has_api_key && gw.name !== 'simulator')}
+                                                className={clsx(
+                                                    "p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all",
+                                                    testing === gw.name && "animate-spin text-indigo-600"
+                                                )}
+                                                title="Test Latency"
+                                            >
+                                                <RotateCcw size={14} />
+                                            </button>
+                                        )}
+                                    </div>
 
                                     {/* API Key input (not for simulator) */}
                                     {gw.name !== 'simulator' && (

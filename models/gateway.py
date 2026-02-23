@@ -21,6 +21,8 @@ class GatewayConfig(Base):
     gateway_name = Column(String(50), nullable=False)  # stripe, razorpay, simulator
     enabled = Column(Boolean, default=True)
     api_key_encrypted = Column(Text, nullable=True)     # encrypted API key (optional)
+    last_health_status = Column(String(20), nullable=True) # healthy, degraded, down
+    last_latency_ms = Column(Float, nullable=True)
     extra_config = Column(Text, nullable=True)           # JSON blob for extra settings
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

@@ -8,6 +8,8 @@ export type GatewayConfig = {
     gateway_name: string
     enabled: boolean
     has_api_key: boolean
+    last_health_status: string | null
+    last_latency_ms: number | null
 }
 
 export type RoutingRule = {

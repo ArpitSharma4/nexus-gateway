@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, X, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight, ChevronLeft, ShieldAlert, Zap } from 'lucide-react'
+import { LogOut, RefreshCw, CreditCard, TrendingUp, CheckCircle2, XCircle, X, Clock, Activity, Settings, Code2, BarChart3, Info, ChevronRight, ChevronLeft, ShieldAlert, Zap, FileText } from 'lucide-react'
 import clsx from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../lib/api'
@@ -9,6 +9,7 @@ import NexusBackground from '../components/NexusBackground'
 import SettingsPage from './SettingsPage'
 import IntegrationPage from './IntegrationPage'
 import AdminDashboard from '../components/AdminDashboard'
+import StatementModal from '../components/StatementModal'
 import { PaymentSkeleton } from '../components/Skeleton'
 import type { Session } from '../App'
 import { useMerchant } from '../contexts/MerchantContext'
@@ -92,6 +93,7 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
     const resultsPerPage = 10
 
     const [showCheckout, setShowCheckout] = useState(false)
+    const [showExport, setShowExport] = useState(false)
     const [activeTab, setActiveTab] = useState<Tab>(session.isAdmin ? 'oversight' : 'payments')
     const [showGuide, setShowGuide] = useState(() => {
         return localStorage.getItem('nexus_guide_dismissed') !== 'true'
@@ -492,6 +494,13 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                                                     <RefreshCw size={14} className={clsx(loading && 'animate-spin')} />
                                                 </button>
                                                 <button
+                                                    onClick={() => setShowExport(true)}
+                                                    className="flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-900 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg transition shadow-sm border border-slate-200"
+                                                >
+                                                    <FileText size={12} className="text-slate-400" />
+                                                    Statement
+                                                </button>
+                                                <button
                                                     onClick={() => setShowCheckout(true)}
                                                     className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg transition shadow-sm"
                                                 >
@@ -606,6 +615,11 @@ export default function DashboardPage({ session, onLogout, onNavigateLegal }: Pr
                         onClose={() => setShowCheckout(false)}
                         onComplete={handleCheckoutComplete}
                         onNavigateLegal={onNavigateLegal}
+                    />
+                )}
+                {showExport && (
+                    <StatementModal
+                        onClose={() => setShowExport(false)}
                     />
                 )}
             </div>

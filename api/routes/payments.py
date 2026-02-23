@@ -3,10 +3,11 @@ api/routes/payments.py — Payment Intent endpoints.
 """
 
 import secrets
+from datetime import datetime
 from typing import Optional, List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -89,6 +90,8 @@ def list_payment_intents(
     limit: int = 10,
     sort: str = "none",
     status: str = "all",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     merchant: Merchant = Depends(get_current_merchant),
     db: Session = Depends(get_db),
 ):
@@ -98,6 +101,11 @@ def list_payment_intents(
     # ── Filtering ──────────────────────────────────────────────────────────
     if status != "all":
         query = query.filter(PaymentIntent.status == status)
+    
+    if start_date:
+        query = query.filter(PaymentIntent.created_at >= start_date)
+    if end_date:
+        query = query.filter(PaymentIntent.created_at <= end_date)
 
     # ── Sorting ────────────────────────────────────────────────────────────
     if sort == "highest":
@@ -239,4 +247,74 @@ async def process_payment_intent(
         bank_decision=result["bank_decision"],
         bank_reason=result["bank_reason"],
         trace_log=[TraceEntry(**t) for t in result["trace_log"]],
+    )
+
+
+@router.get(
+    "/export/secure",
+    summary="Secure Export Payment Intents",
+    description="Returns all payment intents in a range for export purposes (no pagination). File is password protected with the API Key.",
+)
+def export_payment_intents_secure(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    status: str = "all",
+    format: str = "pdf",
+    merchant: Merchant = Depends(get_current_merchant),
+    db: Session = Depends(get_db),
+):
+    from models.payment import PaymentIntent
+    from services.export_service import generate_secure_pdf, generate_secure_csv_zip
+    
+    query = db.query(PaymentIntent).filter(PaymentIntent.merchant_id == merchant.id)
+
+    if status != "all":
+        query = query.filter(PaymentIntent.status == status)
+    if start_date:
+        query = query.filter(PaymentIntent.created_at >= start_date)
+    if end_date:
+        query = query.filter(PaymentIntent.created_at <= end_date)
+
+    intents_objs = query.order_by(PaymentIntent.created_at.desc()).all()
+    
+    # Convert to dict for the service
+    intents = [
+        {
+            "id": i.id,
+            "created_at": i.created_at.isoformat() if i.created_at else None,
+            "amount": i.amount,
+            "currency": i.currency,
+            "status": i.status,
+            "gateway_used": i.gateway_used,
+            "idempotency_key": i.idempotency_key,
+        }
+        for i in intents_objs
+    ]
+
+    date_range = f"{start_date} - {end_date}" if start_date and end_date else "All Time"
+    
+    # Password is the merchant's API key
+    password = merchant.api_key
+
+    if format == "pdf":
+        file_buffer = generate_secure_pdf(
+            data=intents,
+            merchant_name=merchant.name or "Merchant",
+            date_range=date_range,
+            password=password
+        )
+        filename = f"nexus_mini_statement_{datetime.now().strftime('%Y%m%d')}.pdf"
+        media_type = "application/pdf"
+    else:
+        file_buffer = generate_secure_csv_zip(
+            data=intents,
+            password=password
+        )
+        filename = f"nexus_statement_{datetime.now().strftime('%Y%m%d')}.zip"
+        media_type = "application/zip"
+
+    return StreamingResponse(
+        file_buffer,
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
