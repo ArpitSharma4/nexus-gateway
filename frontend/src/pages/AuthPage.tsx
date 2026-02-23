@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Zap, AlertCircle, Copy, Check, KeyRound, User, Shield, Radio } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Zap, AlertCircle, Copy, Check, KeyRound, User, Shield, Radio, ChevronDown } from 'lucide-react'
 import clsx from 'clsx'
 import api, { setApiKey } from '../lib/api'
 import type { Session } from '../App'
@@ -132,14 +133,17 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
         }
     }
 
-    function handleCopyAndEnter() {
+    function handleCopyKey() {
         if (!newKey) return
         navigator.clipboard.writeText(newKey.key)
         setCopied(true)
-        setTimeout(() => {
-            setApiKey(newKey.key)
-            onLogin({ apiKey: newKey.key, merchantName: newKey.biz, merchantId: newKey.id })
-        }, 800)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    function handleEnterDashboard() {
+        if (!newKey) return
+        setApiKey(newKey.key)
+        onLogin({ apiKey: newKey.key, merchantName: newKey.biz, merchantId: newKey.id })
     }
 
     async function handleLogin(e: React.FormEvent) {
@@ -284,28 +288,58 @@ export default function AuthPage({ onLogin, onNavigateLegal }: Props) {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="space-y-4 lg:space-y-6">
-                                            <div className="flex items-center gap-3 text-emerald-600 mb-2">
-                                                <div className="bg-emerald-100 p-1.5 rounded-full"><Check size={20} /></div>
-                                                <span className="text-xl font-bold">Account created!</span>
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="relative flex flex-col h-full"
+                                        >
+                                            <div className="overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
+                                                <div className="flex items-center gap-3 text-emerald-600 mb-4">
+                                                    <div className="bg-emerald-100 p-1.5 rounded-full"><Check size={20} /></div>
+                                                    <span className="text-xl font-bold">Account created!</span>
+                                                </div>
+
+                                                <p className="text-sm text-slate-600 font-medium mb-4">
+                                                    Save your API key for <strong>{newKey.biz}</strong>. It won't be shown again.
+                                                </p>
+
+                                                <div className="bg-slate-900 text-emerald-400 font-mono text-sm rounded-2xl px-5 py-4 mb-4 break-all select-all shadow-inner border border-slate-800">
+                                                    {newKey.key}
+                                                </div>
+
+                                                <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] text-amber-800 font-medium leading-relaxed mb-6">
+                                                    ⚠️ Note: We do not store plain-text keys. If lost, you'll need to create a new business account.
+                                                </div>
+
+                                                {/* Visual indicator for more content */}
+                                                <div className="flex justify-center mb-4 md:hidden animate-bounce text-slate-300">
+                                                    <ChevronDown size={20} />
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-slate-600 font-medium">
-                                                Save your API key for <strong>{newKey.biz}</strong>. It won't be shown again.
-                                            </p>
-                                            <div className="bg-slate-900 text-emerald-400 font-mono text-xs rounded-2xl px-5 py-4 break-all select-all shadow-inner">
-                                                {newKey.key}
+
+                                            <div className="flex flex-col md:flex-row gap-3 mt-auto pt-4 border-t border-slate-100 bg-white/80 backdrop-blur-md">
+                                                <motion.button
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: 0.2 }}
+                                                    onClick={handleCopyKey}
+                                                    className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold py-4 min-h-[44px] rounded-2xl text-sm transition-all border border-slate-200 flex items-center justify-center gap-2"
+                                                >
+                                                    {copied ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
+                                                    {copied ? 'Copied Key!' : 'Copy API Key'}
+                                                </motion.button>
+
+                                                <motion.button
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: 0.3 }}
+                                                    onClick={handleEnterDashboard}
+                                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 min-h-[44px] rounded-2xl text-sm transition-all shadow-lg shadow-indigo-100 btn-shimmer flex items-center justify-center gap-2"
+                                                >
+                                                    Enter Dashboard
+                                                </motion.button>
                                             </div>
-                                            <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] text-amber-800 font-medium leading-relaxed">
-                                                ⚠️ Note: We do not store plain-text keys. If lost, you'll need to create a new business account.
-                                            </div>
-                                            <button
-                                                onClick={handleCopyAndEnter}
-                                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl text-sm transition-all btn-shimmer btn-glow flex items-center justify-center gap-2"
-                                            >
-                                                {copied ? <Check size={18} /> : <Copy size={18} />}
-                                                {copied ? 'Copied! Opening Dashboard...' : 'Copy & Open Dashboard'}
-                                            </button>
-                                        </div>
+                                        </motion.div>
                                     )}
                                 </>
                             )}
