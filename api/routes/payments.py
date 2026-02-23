@@ -260,6 +260,7 @@ def export_payment_intents_secure(
     end_date: Optional[str] = None,
     status: str = "all",
     format: str = "pdf",
+    x_api_key: str = Header(..., alias="X-API-KEY"),
     merchant: Merchant = Depends(get_current_merchant),
     db: Session = Depends(get_db),
 ):
@@ -294,7 +295,7 @@ def export_payment_intents_secure(
     date_range = f"{start_date} - {end_date}" if start_date and end_date else "All Time"
     
     # Password is the merchant's API key
-    password = merchant.api_key
+    password = x_api_key
 
     if format == "pdf":
         file_buffer = generate_secure_pdf(

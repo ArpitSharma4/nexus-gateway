@@ -59,7 +59,12 @@ def generate_secure_pdf(data: List[Dict[str, Any]], merchant_name: str, date_ran
     # Table Data
     table_data = [['Date', 'Amount', 'Currency', 'Gateway', 'Status']]
     for item in data:
-        created_at = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00')).strftime('%d-%m-%Y')
+        raw_dt = item.get('created_at')
+        if raw_dt:
+            created_at = datetime.fromisoformat(raw_dt.replace('Z', '+00:00')).strftime('%d-%m-%Y')
+        else:
+            created_at = '—'
+        
         table_data.append([
             created_at,
             f"{item['amount']/100:.2f}",
