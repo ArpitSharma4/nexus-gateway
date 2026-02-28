@@ -5,6 +5,8 @@ import api, { getSavedApiKey, setApiKey, clearApiKey } from './lib/api'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import LegalPage from './pages/LegalPage'
+import NotFoundPage from './pages/NotFoundPage'
+import ErrorPage from './pages/ErrorPage'
 import SystemMonitor from './components/SystemMonitor'
 import NexusLoader from './components/NexusLoader'
 import { MerchantProvider } from './contexts/MerchantContext'
@@ -66,6 +68,15 @@ export default function App() {
     }
 
     const [view, setView] = useState<View>('app')
+
+    // Simple routing for 404 and Error pages
+    const path = window.location.pathname
+    if (path === '/404') {
+        return <NotFoundPage />
+    }
+    if (path === '/error') {
+        return <ErrorPage />
+    }
 
     if (view === 'legal') {
         return <LegalPage onBack={() => setView('app')} />
