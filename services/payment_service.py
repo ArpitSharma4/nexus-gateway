@@ -109,11 +109,6 @@ async def process_payment(
     # ── 4. Select gateways via routing engine ─────────────────────────────────
     available = get_available_gateways(db=db, merchant_id=intent.merchant_id)
     
-    # Chaos Controls: Filter out gateways with simulated outages
-    from models.gateway import GatewayHealth
-    outages = {h.gateway_name for h in db.query(GatewayHealth).filter(GatewayHealth.is_simulated_outage == True).all()}
-    available = [g for g in available if g.name not in outages]
-
     ordered_gateways = select_gateways(
         db=db,
         merchant_id=intent.merchant_id,
